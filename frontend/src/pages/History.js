@@ -102,15 +102,18 @@ const History = () => {
               <div key={form._id} className="card">
                 <div className="card-header">
                   <div>
-                    <h3 className="card-title">{form.title}</h3>
+                    <h3 className="card-title">{form.customerName || 'N/A'}</h3>
                     <div className="card-meta">
-                      Category: {form.category}
-                      <span className={`priority-badge priority-${form.priority.toLowerCase()}`}>
-                        {form.priority}
+                      Mobile: {form.mobileNumber || 'N/A'} | Loan Type: {form.loanType || 'N/A'}
+                      <span className={`priority-badge priority-${form.interestedStatus?.toLowerCase() === 'yes' ? 'high' : 'low'}`}>
+                        {form.interestedStatus || 'N/A'}
                       </span>
                     </div>
                     <div className="card-meta">
-                      Submitted: {formatDate(form.createdAt)}
+                      Agent: {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})
+                    </div>
+                    <div className="card-meta">
+                      Date: {form.submissionDate ? formatDate(form.submissionDate) : formatDate(form.createdAt)} | Time: {form.submissionTime || 'N/A'}
                     </div>
                   </div>
                   <span className={`status-badge status-${form.status}`}>
@@ -119,7 +122,23 @@ const History = () => {
                 </div>
 
                 <div className="card-content">
-                  <p>{form.description}</p>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong>Agent Remarks:</strong>
+                    <p>{form.agentRemarks || 'No remarks provided'}</p>
+                  </div>
+                  
+                  {form.status !== 'pending' && form.supervisorName && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                      <h4>Supervisor Information:</h4>
+                      <p><strong>Supervisor:</strong> {form.supervisorName} (ID: {form.supervisorId})</p>
+                      {form.asmName && <p><strong>ASM Name:</strong> {form.asmName}</p>}
+                      {form.asmContactNo && <p><strong>ASM Contact:</strong> {form.asmContactNo}</p>}
+                      {form.asmEmailId && <p><strong>ASM Email:</strong> {form.asmEmailId}</p>}
+                      {form.city && <p><strong>City:</strong> {form.city}</p>}
+                      {form.areaName && <p><strong>Area:</strong> {form.areaName}</p>}
+                      {form.supervisorRemark && <p><strong>Supervisor Remark:</strong> {form.supervisorRemark}</p>}
+                    </div>
+                  )}
                 </div>
 
                 {form.status !== 'pending' && form.reviewComment && (

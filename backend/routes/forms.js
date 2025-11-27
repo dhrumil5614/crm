@@ -11,9 +11,10 @@ router.post(
   '/',
   protect,
   [
-    body('title').trim().notEmpty().withMessage('Title is required'),
-    body('description').trim().notEmpty().withMessage('Description is required'),
-    body('category').isIn(['Sales', 'Support', 'Marketing', 'HR', 'Other']).withMessage('Invalid category')
+    body('mobileNumber').trim().notEmpty().withMessage('Mobile number is required'),
+    body('customerName').trim().notEmpty().withMessage('Customer name is required'),
+    body('loanType').isIn(['Home Loan', 'Personal Loan', 'Car Loan', 'Business Loan', 'Education Loan', 'Gold Loan', 'Other']).withMessage('Invalid loan type'),
+    body('interestedStatus').isIn(['Yes', 'No']).withMessage('Interested status must be Yes or No')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -25,14 +26,28 @@ router.post(
     }
 
     try {
-      const { title, description, category, priority } = req.body;
+      const { mobileNumber, customerName, loanType, interestedStatus, agentRemarks } = req.body;
+
+      // Auto-generate date and time
+      const now = new Date();
+      const submissionDate = now;
+      const submissionTime = now.toLocaleTimeString('en-US', { hour12: false });
+
+      // Auto-generate agent info from logged-in user
+      const agentName = req.user.name;
+      const agentId = req.user._id.toString();
 
       const form = await Form.create({
         userId: req.user._id,
-        title,
-        description,
-        category,
-        priority: priority || 'Medium',
+        mobileNumber,
+        customerName,
+        loanType,
+        interestedStatus,
+        agentRemarks: agentRemarks || '',
+        agentName,
+        agentId,
+        submissionDate,
+        submissionTime,
         status: 'pending'
       });
 

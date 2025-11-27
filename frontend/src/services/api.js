@@ -43,8 +43,8 @@ export const formsAPI = {
 export const adminAPI = {
   getAllForms: (status) => api.get(`/admin/forms${status ? `?status=${status}` : ''}`),
   getPendingForms: () => api.get('/admin/forms/pending'),
-  approveForm: (id, reviewComment) => api.put(`/admin/forms/${id}/approve`, { reviewComment }),
-  rejectForm: (id, reviewComment) => api.put(`/admin/forms/${id}/reject`, { reviewComment }),
+  approveForm: (id, data) => api.put(`/admin/forms/${id}/approve`, data),
+  rejectForm: (id, data) => api.put(`/admin/forms/${id}/reject`, data),
   getStats: () => api.get('/admin/stats'),
 };
 
