@@ -24,6 +24,7 @@ router.get('/forms', async (req, res) => {
     const forms = await Form.find(query)
       .populate('userId', 'name email')
       .populate('reviewedBy', 'name email')
+      .populate('remarks.userId', 'name email role')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -47,6 +48,7 @@ router.get('/forms/pending', async (req, res) => {
   try {
     const forms = await Form.find({ status: 'pending' })
       .populate('userId', 'name email')
+      .populate('remarks.userId', 'name email role')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -117,6 +119,7 @@ router.put(
       await form.save();
       await form.populate('userId', 'name email');
       await form.populate('reviewedBy', 'name email');
+      await form.populate('remarks.userId', 'name email role');
 
       res.status(200).json({
         success: true,
@@ -195,6 +198,7 @@ router.put(
       await form.save();
       await form.populate('userId', 'name email');
       await form.populate('reviewedBy', 'name email');
+      await form.populate('remarks.userId', 'name email role');
 
       res.status(200).json({
         success: true,

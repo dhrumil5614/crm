@@ -86,6 +86,7 @@ router.get('/', protect, async (req, res) => {
     const forms = await Form.find(query)
       .populate('userId', 'name email')
       .populate('reviewedBy', 'name email')
+      .populate('remarks.userId', 'name email role')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -109,7 +110,8 @@ router.get('/:id', protect, async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
       .populate('userId', 'name email')
-      .populate('reviewedBy', 'name email');
+      .populate('reviewedBy', 'name email')
+      .populate('remarks.userId', 'name email role');
 
     if (!form) {
       return res.status(404).json({
