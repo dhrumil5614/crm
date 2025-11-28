@@ -145,7 +145,7 @@ const AdminAllForms = () => {
                     <strong>Agent Remarks:</strong>
                     <p>{form.agentRemarks || 'No remarks provided'}</p>
                   </div>
-                  
+
                   {form.status !== 'pending' && form.supervisorName && (
                     <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
                       <h4>Supervisor Information:</h4>
@@ -169,6 +169,15 @@ const AdminAllForms = () => {
                     </div>
                   </div>
                 )}
+
+                <div className="card-actions" style={{ marginTop: '1rem' }}>
+                  <button
+                    className="btn-primary"
+                    onClick={() => navigate(`/forms/${form._id}`)}
+                  >
+                    View Details & Remarks
+                  </button>
+                </div>
               </div>
             ))
           )}

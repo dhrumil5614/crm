@@ -37,6 +37,9 @@ export const formsAPI = {
   getAll: (status) => api.get(`/forms${status ? `?status=${status}` : ''}`),
   getById: (id) => api.get(`/forms/${id}`),
   delete: (id) => api.delete(`/forms/${id}`),
+  addRemark: (id, data) => api.post(`/forms/${id}/remarks`, data),
+  getRemarks: (id, params) => api.get(`/forms/${id}/remarks`, { params }),
+  exportForm: (id) => api.get(`/forms/${id}/export`, { responseType: 'blob' }),
 };
 
 // Admin API

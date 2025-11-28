@@ -126,7 +126,7 @@ const History = () => {
                     <strong>Agent Remarks:</strong>
                     <p>{form.agentRemarks || 'No remarks provided'}</p>
                   </div>
-                  
+
                   {form.status !== 'pending' && form.supervisorName && (
                     <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
                       <h4>Supervisor Information:</h4>
@@ -151,16 +151,23 @@ const History = () => {
                   </div>
                 )}
 
-                {form.status === 'pending' && (
-                  <div className="card-actions">
+                <div className="card-actions">
+                  <button
+                    className="btn-primary"
+                    onClick={() => navigate(`/forms/${form._id}`)}
+                    style={{ marginRight: '0.5rem' }}
+                  >
+                    View Details & Remarks
+                  </button>
+                  {form.status === 'pending' && (
                     <button
                       className="btn-danger"
                       onClick={() => handleDelete(form._id)}
                     >
                       Delete
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))
           )}

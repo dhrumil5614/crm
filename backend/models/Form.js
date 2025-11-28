@@ -143,7 +143,31 @@ const formSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  remarks: [{
+    senderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    senderName: {
+      type: String,
+      required: true
+    },
+    senderRole: {
+      type: String,
+      required: true
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 });
 
 // Update the updatedAt field before saving

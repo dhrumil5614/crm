@@ -10,6 +10,7 @@ import NewEntry from './pages/NewEntry';
 import History from './pages/History';
 import AdminPending from './pages/AdminPending';
 import AdminAllForms from './pages/AdminAllForms';
+import FormDetails from './pages/FormDetails';
 
 function App() {
   return (
@@ -60,6 +61,15 @@ function App() {
             element={
               <ProtectedRoute adminOnly={true}>
                 <AdminAllForms />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/forms/:id"
+            element={
+              <ProtectedRoute>
+                <FormDetails />
               </ProtectedRoute>
             }
           />
