@@ -37,6 +37,24 @@ export const formsAPI = {
   getAll: (status) => api.get(`/forms${status ? `?status=${status}` : ''}`),
   getById: (id) => api.get(`/forms/${id}`),
   delete: (id) => api.delete(`/forms/${id}`),
+
+  // Remarks endpoints
+  addRemark: (formId, message) => api.post(`/forms/${formId}/remarks`, { message }),
+  getRemarks: (formId, startDate, endDate) => {
+    let url = `/forms/${formId}/remarks`;
+    const params = [];
+    if (startDate) params.push(`startDate=${startDate}`);
+    if (endDate) params.push(`endDate=${endDate}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return api.get(url);
+  },
+
+  // Excel export endpoint
+  exportToExcel: (formId) => {
+    return api.get(`/forms/${formId}/export`, {
+      responseType: 'blob',
+    });
+  },
 };
 
 // Admin API

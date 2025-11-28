@@ -45,6 +45,22 @@ const formSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  remarks: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

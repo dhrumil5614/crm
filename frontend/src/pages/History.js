@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import FormDetailModal from '../components/FormDetailModal';
 import { formsAPI } from '../services/api';
 
 const History = () => {
@@ -8,6 +9,7 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
+  const [selectedForm, setSelectedForm] = useState(null);
 
   const navigate = useNavigate();
 
@@ -132,21 +134,37 @@ const History = () => {
                   </div>
                 )}
 
-                {form.status === 'pending' && (
-                  <div className="card-actions">
+                <div className="card-actions">
+                  <button
+                    className="btn-success"
+                    onClick={() => setSelectedForm(form)}
+                    style={{ background: '#667eea', marginRight: '0.5rem' }}
+                  >
+                    View Details & Remarks
+                  </button>
+                  {form.status === 'pending' && (
                     <button
                       className="btn-danger"
                       onClick={() => handleDelete(form._id)}
                     >
                       Delete
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))
           )}
         </div>
       </div>
+
+      {/* Form Detail Modal */}
+      {selectedForm && (
+        <FormDetailModal
+          form={selectedForm}
+          onClose={() => setSelectedForm(null)}
+          onUpdate={() => fetchForms()}
+        />
+      )}
     </>
   );
 };

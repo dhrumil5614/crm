@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import FormDetailModal from '../components/FormDetailModal';
 import { adminAPI } from '../services/api';
 
 const AdminPending = () => {
@@ -8,6 +9,7 @@ const AdminPending = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviewComment, setReviewComment] = useState({});
+  const [selectedForm, setSelectedForm] = useState(null);
 
   const navigate = useNavigate();
 
@@ -146,6 +148,13 @@ const AdminPending = () => {
 
                   <div className="card-actions">
                     <button
+                      style={{ background: '#667eea' }}
+                      className="btn-success"
+                      onClick={() => setSelectedForm(form)}
+                    >
+                      View Details & Remarks
+                    </button>
+                    <button
                       className="btn-success"
                       onClick={() => handleApprove(form._id)}
                     >
@@ -164,6 +173,15 @@ const AdminPending = () => {
           )}
         </div>
       </div>
+
+      {/* Form Detail Modal */}
+      {selectedForm && (
+        <FormDetailModal
+          form={selectedForm}
+          onClose={() => setSelectedForm(null)}
+          onUpdate={() => fetchPendingForms()}
+        />
+      )}
     </>
   );
 };
