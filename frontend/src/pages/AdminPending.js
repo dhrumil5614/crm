@@ -9,7 +9,7 @@ const AdminPending = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviewComment, setReviewComment] = useState({});
-  const [selectedForm, setSelectedForm] = useState(null);
+  const [supervisorData, setSupervisorData] = useState({});
 
   const navigate = useNavigate();
 
@@ -37,9 +37,14 @@ const AdminPending = () => {
     }
 
     try {
-      await adminAPI.approveForm(id, reviewComment[id] || 'Approved');
+      const data = {
+        reviewComment: reviewComment[id] || 'Approved',
+        ...supervisorData[id]
+      };
+      await adminAPI.approveForm(id, data);
       fetchPendingForms();
       setReviewComment({ ...reviewComment, [id]: '' });
+      setSupervisorData({ ...supervisorData, [id]: {} });
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to approve form');
     }
@@ -57,9 +62,14 @@ const AdminPending = () => {
     }
 
     try {
-      await adminAPI.rejectForm(id, comment);
+      const data = {
+        reviewComment: comment,
+        ...supervisorData[id]
+      };
+      await adminAPI.rejectForm(id, data);
       fetchPendingForms();
       setReviewComment({ ...reviewComment, [id]: '' });
+      setSupervisorData({ ...supervisorData, [id]: {} });
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to reject form');
     }
@@ -69,6 +79,16 @@ const AdminPending = () => {
     setReviewComment({
       ...reviewComment,
       [id]: value,
+    });
+  };
+
+  const handleSupervisorDataChange = (id, field, value) => {
+    setSupervisorData({
+      ...supervisorData,
+      [id]: {
+        ...supervisorData[id],
+        [field]: value,
+      },
     });
   };
 
@@ -114,18 +134,21 @@ const AdminPending = () => {
               <div key={form._id} className="card">
                 <div className="card-header">
                   <div>
-                    <h3 className="card-title">{form.title}</h3>
+                    <h3 className="card-title">{form.customerName || 'N/A'}</h3>
                     <div className="card-meta">
-                      Submitted by: {form.userId?.name} ({form.userId?.email})
-                    </div>
-                    <div className="card-meta">
-                      Category: {form.category}
-                      <span className={`priority-badge priority-${form.priority.toLowerCase()}`}>
-                        {form.priority}
+                      Mobile: {form.mobileNumber || 'N/A'} | Loan Type: {form.loanType || 'N/A'}
+                      <span className={`priority-badge priority-${form.interestedStatus?.toLowerCase() === 'yes' ? 'high' : 'low'}`}>
+                        {form.interestedStatus || 'N/A'}
                       </span>
                     </div>
                     <div className="card-meta">
-                      Submitted: {formatDate(form.createdAt)}
+                      Agent: {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})
+                    </div>
+                    <div className="card-meta">
+                      Date: {form.submissionDate ? formatDate(form.submissionDate) : formatDate(form.createdAt)} | Time: {form.submissionTime || 'N/A'}
+                    </div>
+                    <div className="card-meta">
+                      Submitted by: {form.userId?.name} ({form.userId?.email})
                     </div>
                   </div>
                   <span className={`status-badge status-${form.status}`}>
@@ -134,7 +157,10 @@ const AdminPending = () => {
                 </div>
 
                 <div className="card-content">
-                  <p>{form.description}</p>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong>Agent Remarks:</strong>
+                    <p>{form.agentRemarks || 'No remarks provided'}</p>
+                  </div>
                 </div>
 
                 <div className="review-section">
@@ -145,6 +171,81 @@ const AdminPending = () => {
                     onChange={(e) => handleCommentChange(form._id, e.target.value)}
                     style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
                   />
+
+                  <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Supervisor Information:</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="form-group">
+                      <label htmlFor={`asmName-${form._id}`}>ASM Name</label>
+                      <input
+                        type="text"
+                        id={`asmName-${form._id}`}
+                        value={supervisorData[form._id]?.asmName || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'asmName', e.target.value)}
+                        placeholder="Enter ASM name"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor={`asmContactNo-${form._id}`}>ASM Contact No</label>
+                      <input
+                        type="tel"
+                        id={`asmContactNo-${form._id}`}
+                        value={supervisorData[form._id]?.asmContactNo || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'asmContactNo', e.target.value)}
+                        placeholder="Enter ASM contact number"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor={`asmEmailId-${form._id}`}>ASM Email ID</label>
+                      <input
+                        type="email"
+                        id={`asmEmailId-${form._id}`}
+                        value={supervisorData[form._id]?.asmEmailId || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'asmEmailId', e.target.value)}
+                        placeholder="Enter ASM email"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor={`city-${form._id}`}>City</label>
+                      <input
+                        type="text"
+                        id={`city-${form._id}`}
+                        value={supervisorData[form._id]?.city || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'city', e.target.value)}
+                        placeholder="Enter city"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label htmlFor={`areaName-${form._id}`}>Area Name</label>
+                      <input
+                        type="text"
+                        id={`areaName-${form._id}`}
+                        value={supervisorData[form._id]?.areaName || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'areaName', e.target.value)}
+                        placeholder="Enter area name"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label htmlFor={`supervisorRemark-${form._id}`}>Supervisor Remark</label>
+                      <textarea
+                        id={`supervisorRemark-${form._id}`}
+                        value={supervisorData[form._id]?.supervisorRemark || ''}
+                        onChange={(e) => handleSupervisorDataChange(form._id, 'supervisorRemark', e.target.value)}
+                        placeholder="Enter supervisor remark"
+                        rows="3"
+                        style={{ width: '100%', padding: '0.5rem' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e8f4f8', borderRadius: '4px', marginBottom: '1rem' }}>
+                    <small style={{ color: '#666' }}>
+                      <strong>Note:</strong> Supervisor Name and ID will be auto-generated from your login.
+                    </small>
+                  </div>
 
                   <div className="card-actions">
                     <button

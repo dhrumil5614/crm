@@ -71,7 +71,13 @@ router.get('/forms/pending', async (req, res) => {
 router.put(
   '/forms/:id/approve',
   [
-    body('reviewComment').optional().trim()
+    body('reviewComment').optional().trim(),
+    body('asmName').optional().trim(),
+    body('asmContactNo').optional().trim(),
+    body('asmEmailId').optional().trim().isEmail().withMessage('Please provide a valid ASM email'),
+    body('city').optional().trim(),
+    body('areaName').optional().trim(),
+    body('supervisorRemark').optional().trim()
   ],
   async (req, res) => {
     try {
@@ -91,10 +97,24 @@ router.put(
         });
       }
 
+      // Auto-generate supervisor info from logged-in admin
+      const supervisorName = req.user.name;
+      const supervisorId = req.user._id.toString();
+
       form.status = 'approved';
       form.reviewedBy = req.user._id;
       form.reviewedAt = Date.now();
       form.reviewComment = req.body.reviewComment || 'Approved';
+      
+      // Set supervisor fields
+      form.supervisorName = supervisorName;
+      form.supervisorId = supervisorId;
+      form.asmName = req.body.asmName || '';
+      form.asmContactNo = req.body.asmContactNo || '';
+      form.asmEmailId = req.body.asmEmailId || '';
+      form.city = req.body.city || '';
+      form.areaName = req.body.areaName || '';
+      form.supervisorRemark = req.body.supervisorRemark || '';
 
       await form.save();
       await form.populate('userId', 'name email');
@@ -122,7 +142,13 @@ router.put(
 router.put(
   '/forms/:id/reject',
   [
-    body('reviewComment').trim().notEmpty().withMessage('Review comment is required for rejection')
+    body('reviewComment').trim().notEmpty().withMessage('Review comment is required for rejection'),
+    body('asmName').optional().trim(),
+    body('asmContactNo').optional().trim(),
+    body('asmEmailId').optional().trim().isEmail().withMessage('Please provide a valid ASM email'),
+    body('city').optional().trim(),
+    body('areaName').optional().trim(),
+    body('supervisorRemark').optional().trim()
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -150,10 +176,24 @@ router.put(
         });
       }
 
+      // Auto-generate supervisor info from logged-in admin
+      const supervisorName = req.user.name;
+      const supervisorId = req.user._id.toString();
+
       form.status = 'rejected';
       form.reviewedBy = req.user._id;
       form.reviewedAt = Date.now();
       form.reviewComment = req.body.reviewComment;
+      
+      // Set supervisor fields
+      form.supervisorName = supervisorName;
+      form.supervisorId = supervisorId;
+      form.asmName = req.body.asmName || '';
+      form.asmContactNo = req.body.asmContactNo || '';
+      form.asmEmailId = req.body.asmEmailId || '';
+      form.city = req.body.city || '';
+      form.areaName = req.body.areaName || '';
+      form.supervisorRemark = req.body.supervisorRemark || '';
 
       await form.save();
       await form.populate('userId', 'name email');

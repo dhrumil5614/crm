@@ -3,7 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Form = require('../models/Form');
 const { protect } = require('../middleware/auth');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 
 // @route   POST /api/forms
 // @desc    Create a new form entry
@@ -12,9 +12,10 @@ router.post(
   '/',
   protect,
   [
-    body('title').trim().notEmpty().withMessage('Title is required'),
-    body('description').trim().notEmpty().withMessage('Description is required'),
-    body('category').isIn(['Sales', 'Support', 'Marketing', 'HR', 'Other']).withMessage('Invalid category')
+    body('mobileNumber').trim().notEmpty().withMessage('Mobile number is required'),
+    body('customerName').trim().notEmpty().withMessage('Customer name is required'),
+    body('loanType').isIn(['Home Loan', 'Personal Loan', 'Car Loan', 'Business Loan', 'Education Loan', 'Gold Loan', 'Other']).withMessage('Invalid loan type'),
+    body('interestedStatus').isIn(['Yes', 'No']).withMessage('Interested status must be Yes or No')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -26,14 +27,28 @@ router.post(
     }
 
     try {
-      const { title, description, category, priority } = req.body;
+      const { mobileNumber, customerName, loanType, interestedStatus, agentRemarks } = req.body;
+
+      // Auto-generate date and time
+      const now = new Date();
+      const submissionDate = now;
+      const submissionTime = now.toLocaleTimeString('en-US', { hour12: false });
+
+      // Auto-generate agent info from logged-in user
+      const agentName = req.user.name;
+      const agentId = req.user._id.toString();
 
       const form = await Form.create({
         userId: req.user._id,
-        title,
-        description,
-        category,
-        priority: priority || 'Medium',
+        mobileNumber,
+        customerName,
+        loanType,
+        interestedStatus,
+        agentRemarks: agentRemarks || '',
+        agentName,
+        agentId,
+        submissionDate,
+        submissionTime,
         status: 'pending'
       });
 
@@ -174,77 +189,17 @@ router.delete('/:id', protect, async (req, res) => {
 // @route   POST /api/forms/:id/remarks
 // @desc    Add a remark to a form
 // @access  Private
-router.post(
-  '/:id/remarks',
-  protect,
-  [
-    body('message').trim().notEmpty().withMessage('Remark message is required')
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+router.post('/:id/remarks', protect, async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        message: 'Message is required'
       });
     }
 
-    try {
-      const form = await Form.findById(req.params.id);
-
-      if (!form) {
-        return res.status(404).json({
-          success: false,
-          message: 'Form not found'
-        });
-      }
-
-      // Check if user is authorized (form owner or admin)
-      if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to add remarks to this form'
-        });
-      }
-
-      // Add remark
-      form.remarks.unshift({
-        userId: req.user._id,
-        message: req.body.message,
-        createdAt: new Date()
-      });
-
-      await form.save();
-
-      // Populate the remarks with user info
-      await form.populate('remarks.userId', 'name email role');
-      await form.populate('userId', 'name email');
-      await form.populate('reviewedBy', 'name email');
-
-      res.status(201).json({
-        success: true,
-        message: 'Remark added successfully',
-        form
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Server error',
-        error: error.message
-      });
-    }
-  }
-);
-
-// @route   GET /api/forms/:id/remarks
-// @desc    Get remarks for a form with optional date range filtering
-// @access  Private
-router.get('/:id/remarks', protect, async (req, res) => {
-  try {
-    const form = await Form.findById(req.params.id)
-      .populate('remarks.userId', 'name email role')
-      .populate('userId', 'name email')
-      .populate('reviewedBy', 'name email');
+    const form = await Form.findById(req.params.id);
 
     if (!form) {
       return res.status(404).json({
@@ -253,44 +208,78 @@ router.get('/:id/remarks', protect, async (req, res) => {
       });
     }
 
-    // Check if user is authorized
-    if (form.userId._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check authorization
+    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to access remarks for this form'
+        message: 'Not authorized to add remarks to this form'
+      });
+    }
+
+    const newRemark = {
+      senderId: req.user._id,
+      senderName: req.user.name,
+      senderRole: req.user.role,
+      message
+    };
+
+    form.remarks.unshift(newRemark); // Add to beginning (newest first)
+    await form.save();
+
+    res.status(200).json({
+      success: true,
+      data: form.remarks
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/forms/:id/remarks
+// @desc    Get remarks for a form with optional date filtering
+// @access  Private
+router.get('/:id/remarks', protect, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Check authorization
+    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view remarks for this form'
       });
     }
 
     let remarks = form.remarks;
 
     // Filter by date range if provided
-    const { startDate, endDate } = req.query;
-    if (startDate || endDate) {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Include the entire end date
+
       remarks = remarks.filter(remark => {
         const remarkDate = new Date(remark.createdAt);
-        if (startDate && endDate) {
-          return remarkDate >= new Date(startDate) && remarkDate <= new Date(endDate);
-        } else if (startDate) {
-          return remarkDate >= new Date(startDate);
-        } else if (endDate) {
-          return remarkDate <= new Date(endDate);
-        }
-        return true;
+        return remarkDate >= start && remarkDate <= end;
       });
     }
-
-    // Sort by newest first
-    remarks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.status(200).json({
       success: true,
       count: remarks.length,
-      remarks,
-      form: {
-        _id: form._id,
-        title: form.title,
-        status: form.status
-      }
+      data: remarks
     });
   } catch (error) {
     res.status(500).json({
@@ -302,14 +291,11 @@ router.get('/:id/remarks', protect, async (req, res) => {
 });
 
 // @route   GET /api/forms/:id/export
-// @desc    Download form with remarks as Excel
+// @desc    Export form details and remarks to Excel
 // @access  Private
 router.get('/:id/export', protect, async (req, res) => {
   try {
-    const form = await Form.findById(req.params.id)
-      .populate('userId', 'name email')
-      .populate('reviewedBy', 'name email')
-      .populate('remarks.userId', 'name email role');
+    const form = await Form.findById(req.params.id).populate('userId', 'name email');
 
     if (!form) {
       return res.status(404).json({
@@ -318,7 +304,7 @@ router.get('/:id/export', protect, async (req, res) => {
       });
     }
 
-    // Check if user is authorized
+    // Check authorization
     if (form.userId._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -326,60 +312,62 @@ router.get('/:id/export', protect, async (req, res) => {
       });
     }
 
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Form Details');
 
-    // Form Details Sheet
-    const formData = [
-      ['Form ID', form._id.toString()],
-      ['Title', form.title],
-      ['Description', form.description],
-      ['Category', form.category],
-      ['Priority', form.priority],
-      ['Status', form.status.toUpperCase()],
-      ['Submitted By', form.userId.name],
-      ['Submitted Email', form.userId.email],
-      ['Submitted At', new Date(form.createdAt).toLocaleString()],
-      [''],
-      ['Review Status', ''],
-      ['Reviewed By', form.reviewedBy ? form.reviewedBy.name : 'N/A'],
-      ['Reviewed At', form.reviewedAt ? new Date(form.reviewedAt).toLocaleString() : 'N/A'],
-      ['Review Comment', form.reviewComment || 'N/A']
+    // Add Form Details
+    worksheet.columns = [
+      { header: 'Field', key: 'field', width: 20 },
+      { header: 'Value', key: 'value', width: 50 }
     ];
 
-    const formSheet = XLSX.utils.aoa_to_sheet(formData);
-    XLSX.utils.book_append_sheet(workbook, formSheet, 'Form Details');
+    worksheet.addRows([
+      { field: 'Form ID', value: form._id.toString() },
+      { field: 'Status', value: form.status },
+      { field: 'Customer Name', value: form.customerName },
+      { field: 'Mobile Number', value: form.mobileNumber },
+      { field: 'Loan Type', value: form.loanType },
+      { field: 'Interested Status', value: form.interestedStatus },
+      { field: 'Agent Name', value: form.agentName },
+      { field: 'Submission Date', value: new Date(form.submissionDate).toLocaleDateString() },
+      { field: 'Submission Time', value: form.submissionTime },
+      { field: 'Supervisor Name', value: form.supervisorName },
+      { field: 'Supervisor Remark', value: form.supervisorRemark },
+      { field: 'ASM Name', value: form.asmName },
+      { field: 'City', value: form.city },
+      { field: 'Area Name', value: form.areaName }
+    ]);
 
-    // Remarks Sheet (sorted newest to oldest)
-    const sortedRemarks = [...form.remarks].sort((a, b) =>
-      new Date(b.createdAt) - new Date(a.createdAt)
-    );
+    // Add empty row
+    worksheet.addRow([]);
 
-    const remarksData = [
-      ['Date & Time', 'Posted By', 'Role', 'Message']
-    ];
+    // Add Remarks Section
+    worksheet.addRow(['Remarks History']);
+    worksheet.addRow(['Date', 'Sender', 'Role', 'Message']);
 
-    sortedRemarks.forEach(remark => {
-      remarksData.push([
+    form.remarks.forEach(remark => {
+      worksheet.addRow([
         new Date(remark.createdAt).toLocaleString(),
-        remark.userId.name,
-        remark.userId.role.toUpperCase(),
+        remark.senderName,
+        remark.senderRole,
         remark.message
       ]);
     });
 
-    const remarksSheet = XLSX.utils.aoa_to_sheet(remarksData);
-    XLSX.utils.book_append_sheet(workbook, remarksSheet, 'Remarks');
+    // Style the header
+    worksheet.getRow(1).font = { bold: true };
+    const remarksHeaderRowIndex = worksheet.rowCount - form.remarks.length - 1;
+    worksheet.getRow(remarksHeaderRowIndex).font = { bold: true, size: 12 };
+    worksheet.getRow(remarksHeaderRowIndex + 1).font = { bold: true };
 
-    // Generate Excel file
-    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-    // Set headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=Form_${form._id}_${Date.now()}.xlsx`);
+    res.setHeader('Content-Disposition', `attachment; filename=form-${form._id}.xlsx`);
 
-    res.send(excelBuffer);
+    await workbook.xlsx.write(res);
+    res.end();
+
   } catch (error) {
+    console.error('Export error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

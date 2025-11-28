@@ -5,10 +5,11 @@ import { formsAPI } from '../services/api';
 
 const NewEntry = () => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'Other',
-    priority: 'Medium',
+    mobileNumber: '',
+    customerName: '',
+    loanType: 'Other',
+    interestedStatus: 'No',
+    agentRemarks: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -33,10 +34,11 @@ const NewEntry = () => {
       await formsAPI.create(formData);
       setSuccess('Form submitted successfully and is pending approval!');
       setFormData({
-        title: '',
-        description: '',
-        category: 'Other',
-        priority: 'Medium',
+        mobileNumber: '',
+        customerName: '',
+        loanType: 'Other',
+        interestedStatus: 'No',
+        agentRemarks: '',
       });
 
       setTimeout(() => {
@@ -76,60 +78,82 @@ const NewEntry = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="title">Title *</label>
+                <label htmlFor="mobileNumber">Mobile Number *</label>
+                <input
+                  type="tel"
+                  id="mobileNumber"
+                  name="mobileNumber"
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter customer mobile number"
+                  pattern="[0-9]{10}"
+                  maxLength="10"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="customerName">Customer Name *</label>
                 <input
                   type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
+                  id="customerName"
+                  name="customerName"
+                  value={formData.customerName}
                   onChange={handleChange}
                   required
-                  placeholder="Enter a title for your request"
+                  placeholder="Enter customer name"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="description">Description *</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  placeholder="Provide detailed description of your request"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="category">Category *</label>
+                <label htmlFor="loanType">Loan Type *</label>
                 <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
+                  id="loanType"
+                  name="loanType"
+                  value={formData.loanType}
                   onChange={handleChange}
                   required
                 >
-                  <option value="Sales">Sales</option>
-                  <option value="Support">Support</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="HR">HR</option>
+                  <option value="Home Loan">Home Loan</option>
+                  <option value="Personal Loan">Personal Loan</option>
+                  <option value="Car Loan">Car Loan</option>
+                  <option value="Business Loan">Business Loan</option>
+                  <option value="Education Loan">Education Loan</option>
+                  <option value="Gold Loan">Gold Loan</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="priority">Priority *</label>
+                <label htmlFor="interestedStatus">Interested Status *</label>
                 <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
+                  id="interestedStatus"
+                  name="interestedStatus"
+                  value={formData.interestedStatus}
                   onChange={handleChange}
                   required
                 >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="agentRemarks">Agent Remarks</label>
+                <textarea
+                  id="agentRemarks"
+                  name="agentRemarks"
+                  value={formData.agentRemarks}
+                  onChange={handleChange}
+                  placeholder="Enter any additional remarks"
+                  rows="4"
+                />
+              </div>
+
+              <div className="form-group" style={{ padding: '0.5rem', backgroundColor: '#f5f5f5', borderRadius: '4px', marginBottom: '1rem' }}>
+                <small style={{ color: '#666' }}>
+                  <strong>Note:</strong> Date and Time will be automatically recorded. Agent Name and ID will be auto-generated from your login.
+                </small>
               </div>
 
               <button

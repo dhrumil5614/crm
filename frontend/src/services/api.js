@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance
 const api = axios.create({
@@ -37,32 +37,17 @@ export const formsAPI = {
   getAll: (status) => api.get(`/forms${status ? `?status=${status}` : ''}`),
   getById: (id) => api.get(`/forms/${id}`),
   delete: (id) => api.delete(`/forms/${id}`),
-
-  // Remarks endpoints
-  addRemark: (formId, message) => api.post(`/forms/${formId}/remarks`, { message }),
-  getRemarks: (formId, startDate, endDate) => {
-    let url = `/forms/${formId}/remarks`;
-    const params = [];
-    if (startDate) params.push(`startDate=${startDate}`);
-    if (endDate) params.push(`endDate=${endDate}`);
-    if (params.length > 0) url += `?${params.join('&')}`;
-    return api.get(url);
-  },
-
-  // Excel export endpoint
-  exportToExcel: (formId) => {
-    return api.get(`/forms/${formId}/export`, {
-      responseType: 'blob',
-    });
-  },
+  addRemark: (id, data) => api.post(`/forms/${id}/remarks`, data),
+  getRemarks: (id, params) => api.get(`/forms/${id}/remarks`, { params }),
+  exportForm: (id) => api.get(`/forms/${id}/export`, { responseType: 'blob' }),
 };
 
 // Admin API
 export const adminAPI = {
   getAllForms: (status) => api.get(`/admin/forms${status ? `?status=${status}` : ''}`),
   getPendingForms: () => api.get('/admin/forms/pending'),
-  approveForm: (id, reviewComment) => api.put(`/admin/forms/${id}/approve`, { reviewComment }),
-  rejectForm: (id, reviewComment) => api.put(`/admin/forms/${id}/reject`, { reviewComment }),
+  approveForm: (id, data) => api.put(`/admin/forms/${id}/approve`, data),
+  rejectForm: (id, data) => api.put(`/admin/forms/${id}/reject`, data),
   getStats: () => api.get('/admin/stats'),
 };
 
