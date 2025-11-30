@@ -20,8 +20,12 @@ const RemarksSection = ({ formId, onRemarkAdded }) => {
 
   const fetchRemarks = async (filterStartDate = '', filterEndDate = '') => {
     try {
-      const response = await formsAPI.getRemarks(formId, filterStartDate, filterEndDate);
-      setRemarks(response.data.remarks || []);
+      const params = {};
+      if (filterStartDate) params.startDate = filterStartDate;
+      if (filterEndDate) params.endDate = filterEndDate;
+
+      const response = await formsAPI.getRemarks(formId, params);
+      setRemarks(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch remarks:', err);
     }
@@ -39,13 +43,13 @@ const RemarksSection = ({ formId, onRemarkAdded }) => {
     setSuccess('');
 
     try {
-      const response = await formsAPI.addRemark(formId, newRemark);
+      const response = await formsAPI.addRemark(formId, { message: newRemark });
       setSuccess('Remark added successfully!');
       setNewRemark('');
 
-      // Update remarks list
-      if (response.data.form && response.data.form.remarks) {
-        setRemarks(response.data.form.remarks);
+      // Update remarks list with the returned data
+      if (response.data.data) {
+        setRemarks(response.data.data);
       } else {
         await fetchRemarks();
       }
@@ -264,10 +268,10 @@ const RemarksSection = ({ formId, onRemarkAdded }) => {
               <div
                 key={remark._id || index}
                 style={{
-                  background: remark.userId?._id === user?.id ? '#e3f2fd' : '#f5f5f5',
+                  background: remark.senderId === user?.id ? '#e3f2fd' : '#f5f5f5',
                   padding: '1rem',
                   borderRadius: '8px',
-                  borderLeft: `4px solid ${remark.userId?._id === user?.id ? '#2196f3' : '#95a5a6'}`,
+                  borderLeft: `4px solid ${remark.senderId === user?.id ? '#2196f3' : '#95a5a6'}`,
                 }}
               >
                 <div style={{
@@ -279,18 +283,18 @@ const RemarksSection = ({ formId, onRemarkAdded }) => {
                 }}>
                   <div>
                     <strong style={{ color: '#2c3e50' }}>
-                      {remark.userId?.name || 'Unknown User'}
+                      {remark.senderName || 'Unknown User'}
                     </strong>
                     {' '}
                     <span style={{
-                      background: remark.userId?.role === 'admin' ? '#e74c3c' : '#3498db',
+                      background: remark.senderRole === 'admin' ? '#e74c3c' : '#3498db',
                       color: 'white',
                       padding: '0.2rem 0.5rem',
                       borderRadius: '3px',
                       fontSize: '0.75rem',
                       marginLeft: '0.5rem'
                     }}>
-                      {remark.userId?.role?.toUpperCase() || 'USER'}
+                      {remark.senderRole?.toUpperCase() || 'USER'}
                     </span>
                   </div>
                   <span>{formatDate(remark.createdAt)}</span>

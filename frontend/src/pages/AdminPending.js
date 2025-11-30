@@ -8,6 +8,7 @@ const AdminPending = () => {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedForm, setSelectedForm] = useState(null);
   const [reviewComment, setReviewComment] = useState({});
   const [supervisorData, setSupervisorData] = useState({});
 

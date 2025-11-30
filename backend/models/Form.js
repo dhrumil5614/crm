@@ -52,7 +52,7 @@ const formSchema = new mongoose.Schema({
   },
   submissionTime: {
     type: String,
-    default: function() {
+    default: function () {
       return new Date().toLocaleTimeString('en-US', { hour12: false });
     }
   },
@@ -136,22 +136,6 @@ const formSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  remarks: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    message: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -187,7 +171,7 @@ const formSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt field before saving
-formSchema.pre('save', function(next) {
+formSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
