@@ -239,4 +239,164 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/forms/export
+// @desc    Export all forms to Excel with remarks as columns
+// @access  Private/Admin
+router.get('/forms/export', async (req, res) => {
+  try {
+    const ExcelJS = require('exceljs');
+
+    // Fetch all forms with populated user data
+    const forms = await Form.find({})
+      .populate('userId', 'name email')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 });
+
+    // Find maximum number of remarks across all forms
+    const maxRemarks = forms.reduce((max, form) => {
+      return Math.max(max, form.remarks ? form.remarks.length : 0);
+    }, 0);
+
+    // Create workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Forms');
+
+    // Define fixed columns
+    const fixedColumns = [
+      { header: 'Form ID', key: 'formId', width: 25 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Customer Name', key: 'customerName', width: 20 },
+      { header: 'Mobile Number', key: 'mobileNumber', width: 15 },
+      { header: 'Loan Type', key: 'loanType', width: 15 },
+      { header: 'Interested Status', key: 'interestedStatus', width: 15 },
+      { header: 'Agent Name', key: 'agentName', width: 20 },
+      { header: 'Agent ID', key: 'agentId', width: 25 },
+      { header: 'Agent Remarks', key: 'agentRemarks', width: 30 },
+      { header: 'Submission Date', key: 'submissionDate', width: 15 },
+      { header: 'Submission Time', key: 'submissionTime', width: 12 },
+      { header: 'Supervisor Name', key: 'supervisorName', width: 20 },
+      { header: 'Supervisor ID', key: 'supervisorId', width: 25 },
+      { header: 'ASM Name', key: 'asmName', width: 20 },
+      { header: 'ASM Contact No', key: 'asmContactNo', width: 15 },
+      { header: 'ASM Email ID', key: 'asmEmailId', width: 25 },
+      { header: 'City', key: 'city', width: 15 },
+      { header: 'Area Name', key: 'areaName', width: 20 },
+      { header: 'Supervisor Remark', key: 'supervisorRemark', width: 30 },
+      { header: 'Review Comment', key: 'reviewComment', width: 30 },
+      { header: 'Reviewed By', key: 'reviewedBy', width: 20 },
+      { header: 'Reviewed At', key: 'reviewedAt', width: 18 },
+      { header: 'Submitted By', key: 'submittedBy', width: 20 },
+      { header: 'Created At', key: 'createdAt', width: 18 }
+    ];
+
+    // Add dynamic remark columns
+    const remarkColumns = [];
+    for (let i = 1; i <= maxRemarks; i++) {
+      remarkColumns.push({
+        header: `Remark ${i} - Sender`,
+        key: `remark${i}Sender`,
+        width: 25
+      });
+      remarkColumns.push({
+        header: `Remark ${i} - Role`,
+        key: `remark${i}Role`,
+        width: 12
+      });
+      remarkColumns.push({
+        header: `Remark ${i} - Date`,
+        key: `remark${i}Date`,
+        width: 18
+      });
+      remarkColumns.push({
+        header: `Remark ${i} - Message`,
+        key: `remark${i}Message`,
+        width: 40
+      });
+    }
+
+    // Set all columns
+    worksheet.columns = [...fixedColumns, ...remarkColumns];
+
+    // Add data rows
+    forms.forEach(form => {
+      const rowData = {
+        formId: form._id.toString(),
+        status: form.status,
+        customerName: form.customerName || '',
+        mobileNumber: form.mobileNumber || '',
+        loanType: form.loanType || '',
+        interestedStatus: form.interestedStatus || '',
+        agentName: form.agentName || '',
+        agentId: form.agentId || '',
+        agentRemarks: form.agentRemarks || '',
+        submissionDate: form.submissionDate ? new Date(form.submissionDate).toLocaleDateString() : '',
+        submissionTime: form.submissionTime || '',
+        supervisorName: form.supervisorName || '',
+        supervisorId: form.supervisorId || '',
+        asmName: form.asmName || '',
+        asmContactNo: form.asmContactNo || '',
+        asmEmailId: form.asmEmailId || '',
+        city: form.city || '',
+        areaName: form.areaName || '',
+        supervisorRemark: form.supervisorRemark || '',
+        reviewComment: form.reviewComment || '',
+        reviewedBy: form.reviewedBy?.name || '',
+        reviewedAt: form.reviewedAt ? new Date(form.reviewedAt).toLocaleString() : '',
+        submittedBy: form.userId?.name || '',
+        createdAt: new Date(form.createdAt).toLocaleString()
+      };
+
+      // Add remark data
+      if (form.remarks && form.remarks.length > 0) {
+        form.remarks.forEach((remark, index) => {
+          const remarkNum = index + 1;
+          rowData[`remark${remarkNum}Sender`] = remark.senderName || '';
+          rowData[`remark${remarkNum}Role`] = remark.senderRole || '';
+          rowData[`remark${remarkNum}Date`] = remark.createdAt ? new Date(remark.createdAt).toLocaleString() : '';
+          rowData[`remark${remarkNum}Message`] = remark.message || '';
+        });
+      }
+
+      worksheet.addRow(rowData);
+    });
+
+    // Style the header row
+    worksheet.getRow(1).font = { bold: true, size: 11 };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Auto-filter
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: fixedColumns.length + remarkColumns.length }
+    };
+
+    // Freeze first row
+    worksheet.views = [
+      { state: 'frozen', ySplit: 1 }
+    ];
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=all-forms-${Date.now()}.xlsx`);
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -49,6 +49,7 @@ export const adminAPI = {
   approveForm: (id, data) => api.put(`/admin/forms/${id}/approve`, data),
   rejectForm: (id, data) => api.put(`/admin/forms/${id}/reject`, data),
   getStats: () => api.get('/admin/stats'),
+  exportAllForms: () => api.get('/admin/forms/export', { responseType: 'blob' }),
 };
 
 export default api;

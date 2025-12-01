@@ -103,6 +103,23 @@ const AdminPending = () => {
     });
   };
 
+  const handleExportAll = async () => {
+    try {
+      const response = await adminAPI.exportAllForms();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `all-forms-${Date.now()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Failed to export forms');
+      console.error(err);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -110,9 +127,14 @@ const AdminPending = () => {
         <div className="dashboard">
           <div className="dashboard-header">
             <h2>Pending Approvals</h2>
-            <button onClick={() => navigate('/dashboard')}>
-              Back to Dashboard
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={handleExportAll} style={{ background: '#27ae60' }}>
+                Export All Forms
+              </button>
+              <button onClick={() => navigate('/dashboard')}>
+                Back to Dashboard
+              </button>
+            </div>
           </div>
 
           {error && (
