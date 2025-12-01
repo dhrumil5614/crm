@@ -72,7 +72,7 @@ router.put(
     body('reviewComment').optional().trim(),
     body('asmName').optional().trim(),
     body('asmContactNo').optional().trim(),
-    body('asmEmailId').optional().trim().isEmail().withMessage('Please provide a valid ASM email'),
+    body('asmEmailId').optional({ checkFalsy: true }).trim().isEmail().withMessage('Please provide a valid ASM email'),
     body('city').optional().trim(),
     body('areaName').optional().trim(),
     body('supervisorRemark').optional().trim()
@@ -142,7 +142,7 @@ router.put(
     body('reviewComment').trim().notEmpty().withMessage('Review comment is required for rejection'),
     body('asmName').optional().trim(),
     body('asmContactNo').optional().trim(),
-    body('asmEmailId').optional().trim().isEmail().withMessage('Please provide a valid ASM email'),
+    body('asmEmailId').optional({ checkFalsy: true }).trim().isEmail().withMessage('Please provide a valid ASM email'),
     body('city').optional().trim(),
     body('areaName').optional().trim(),
     body('supervisorRemark').optional().trim()
