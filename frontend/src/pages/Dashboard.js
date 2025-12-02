@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import ReminderList from '../components/ReminderList';
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
@@ -15,6 +16,9 @@ const Dashboard = () => {
           <div className="dashboard-header">
             <h2>Welcome, {user?.name}!</h2>
           </div>
+
+          {/* Reminders Section */}
+          <ReminderList />
 
           <div className="dashboard-nav">
             {!isAdmin && (

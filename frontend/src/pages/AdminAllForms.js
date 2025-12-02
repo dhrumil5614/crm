@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
+import SetReminderModal from '../components/SetReminderModal';
 import { adminAPI } from '../services/api';
 
 const AdminAllForms = () => {
@@ -11,6 +12,7 @@ const AdminAllForms = () => {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [selectedForm, setSelectedForm] = useState(null);
+  const [reminderForm, setReminderForm] = useState(null);
 
   const navigate = useNavigate();
 
@@ -201,6 +203,12 @@ const AdminAllForms = () => {
                   >
                     View Details & Remarks
                   </button>
+                  <button
+                    style={{ background: '#f39c12', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    onClick={() => setReminderForm(form)}
+                  >
+                    Set Reminder
+                  </button>
                 </div>
               </div>
             ))
@@ -216,6 +224,19 @@ const AdminAllForms = () => {
           onUpdate={() => {
             fetchForms();
             fetchStats();
+          }}
+        />
+      )}
+
+      {/* Set Reminder Modal */}
+      {reminderForm && (
+        <SetReminderModal
+          formId={reminderForm._id}
+          customerName={reminderForm.customerName}
+          onClose={() => setReminderForm(null)}
+          onSuccess={() => {
+            setReminderForm(null);
+            fetchForms();
           }}
         />
       )}

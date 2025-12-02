@@ -136,6 +136,44 @@ const formSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // Reminder/Notification system
+  reminder: {
+    isSet: {
+      type: Boolean,
+      default: false
+    },
+    dateTime: {
+      type: Date,
+      default: null
+    },
+    message: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    setBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    setByName: {
+      type: String,
+      default: ''
+    },
+    isCompleted: {
+      type: Boolean,
+      default: false
+    },
+    completedAt: {
+      type: Date,
+      default: null
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now

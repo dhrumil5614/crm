@@ -40,6 +40,8 @@ export const formsAPI = {
   addRemark: (id, data) => api.post(`/forms/${id}/remarks`, data),
   getRemarks: (id, params) => api.get(`/forms/${id}/remarks`, { params }),
   exportForm: (id) => api.get(`/forms/${id}/export`, { responseType: 'blob' }),
+  getReminders: () => api.get('/forms/reminders'),
+  markReminderComplete: (id) => api.put(`/forms/${id}/reminder/complete`),
 };
 
 // Admin API
@@ -50,6 +52,7 @@ export const adminAPI = {
   rejectForm: (id, data) => api.put(`/admin/forms/${id}/reject`, data),
   getStats: () => api.get('/admin/stats'),
   exportAllForms: () => api.get('/admin/forms/export', { responseType: 'blob' }),
+  setReminder: (id, data) => api.put(`/admin/forms/${id}/reminder`, data),
 };
 
 export default api;

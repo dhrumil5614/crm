@@ -399,4 +399,59 @@ router.get('/forms/export', async (req, res) => {
   }
 });
 
+// @route   PUT /api/admin/forms/:id/reminder
+// @desc    Set a reminder on a form
+// @access  Private/Admin
+router.put('/forms/:id/reminder', [
+  body('dateTime').notEmpty().isISO8601().withMessage('Valid date and time is required'),
+  body('message').optional().trim()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Set reminder
+    form.reminder = {
+      isSet: true,
+      dateTime: new Date(req.body.dateTime),
+      message: req.body.message || '',
+      setBy: req.user._id,
+      setByName: req.user.name,
+      isCompleted: false,
+      completedAt: null,
+      completedBy: null
+    };
+
+    await form.save();
+    await form.populate('userId', 'name email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Reminder set successfully',
+      form
+    });
+  } catch (error) {
+    console.error('Set reminder error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

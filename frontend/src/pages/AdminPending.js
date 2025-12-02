@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
+import SetReminderModal from '../components/SetReminderModal';
 import { adminAPI } from '../services/api';
 
 const AdminPending = () => {
@@ -9,6 +10,7 @@ const AdminPending = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedForm, setSelectedForm] = useState(null);
+  const [reminderForm, setReminderForm] = useState(null);
   const [reviewComment, setReviewComment] = useState({});
   const [supervisorData, setSupervisorData] = useState({});
 
@@ -279,6 +281,12 @@ const AdminPending = () => {
                       View Details & Remarks
                     </button>
                     <button
+                      style={{ background: '#f39c12' }}
+                      onClick={() => setReminderForm(form)}
+                    >
+                      Set Reminder
+                    </button>
+                    <button
                       className="btn-success"
                       onClick={() => handleApprove(form._id)}
                     >
@@ -304,6 +312,19 @@ const AdminPending = () => {
           form={selectedForm}
           onClose={() => setSelectedForm(null)}
           onUpdate={() => fetchPendingForms()}
+        />
+      )}
+
+      {/* Set Reminder Modal */}
+      {reminderForm && (
+        <SetReminderModal
+          formId={reminderForm._id}
+          customerName={reminderForm.customerName}
+          onClose={() => setReminderForm(null)}
+          onSuccess={() => {
+            setReminderForm(null);
+            fetchPendingForms();
+          }}
         />
       )}
     </>
