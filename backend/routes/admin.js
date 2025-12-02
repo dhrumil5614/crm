@@ -265,6 +265,7 @@ router.get('/forms/export', async (req, res) => {
     const fixedColumns = [
       { header: 'Form ID', key: 'formId', width: 25 },
       { header: 'Status', key: 'status', width: 12 },
+      { header: 'Progress Status', key: 'progressStatus', width: 15 },
       { header: 'Customer Name', key: 'customerName', width: 20 },
       { header: 'Mobile Number', key: 'mobileNumber', width: 15 },
       { header: 'Loan Type', key: 'loanType', width: 15 },
@@ -322,6 +323,7 @@ router.get('/forms/export', async (req, res) => {
       const rowData = {
         formId: form._id.toString(),
         status: form.status,
+        progressStatus: form.progressStatus || 'Active',
         customerName: form.customerName || '',
         mobileNumber: form.mobileNumber || '',
         loanType: form.loanType || '',

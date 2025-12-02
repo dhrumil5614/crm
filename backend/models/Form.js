@@ -123,6 +123,12 @@ const formSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  // Progress tracking status
+  progressStatus: {
+    type: String,
+    enum: ['Active', 'Loss', 'Meeting', 'Communication', 'Login'],
+    default: 'Active'
+  },
   reviewedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

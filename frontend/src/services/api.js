@@ -42,6 +42,7 @@ export const formsAPI = {
   exportForm: (id) => api.get(`/forms/${id}/export`, { responseType: 'blob' }),
   getReminders: () => api.get('/forms/reminders'),
   markReminderComplete: (id) => api.put(`/forms/${id}/reminder/complete`),
+  updateProgressStatus: (id, progressStatus) => api.put(`/forms/${id}/status`, { progressStatus }),
 };
 
 // Admin API

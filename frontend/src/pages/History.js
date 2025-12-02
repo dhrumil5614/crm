@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
+import StatusDropdown from '../components/StatusDropdown';
 import { formsAPI } from '../services/api';
 
 const History = () => {
@@ -128,9 +129,16 @@ const History = () => {
                     </span>
                     <h3 className="card-title" style={{ margin: 0 }}>{form.customerName || 'N/A'}</h3>
                   </div>
-                  <span className={`status-badge status-${form.status}`}>
-                    {form.status.toUpperCase()}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                    <StatusDropdown
+                      formId={form._id}
+                      currentStatus={form.progressStatus}
+                      onUpdate={() => fetchForms()}
+                    />
+                    <span className={`status-badge status-${form.status}`}>
+                      {form.status.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Expanded Content - Only Visible When Expanded */}

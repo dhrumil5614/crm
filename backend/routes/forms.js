@@ -457,4 +457,55 @@ router.put('/:id/reminder/complete', protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/forms/:id/status
+// @desc    Update form progress status
+// @access  Private
+router.put('/:id/status', protect, async (req, res) => {
+  try {
+    const { progressStatus } = req.body;
+
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Check if user is authorized (owner or admin)
+    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this form'
+      });
+    }
+
+    // Validate status
+    const validStatuses = ['Active', 'Loss', 'Meeting', 'Communication', 'Login'];
+    if (!validStatuses.includes(progressStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid progress status'
+      });
+    }
+
+    form.progressStatus = progressStatus;
+    await form.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Progress status updated successfully',
+      progressStatus: form.progressStatus
+    });
+  } catch (error) {
+    console.error('Update status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
