@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
 import SetReminderModal from '../components/SetReminderModal';
+import StatusDropdown from '../components/StatusDropdown';
 import { adminAPI } from '../services/api';
 
 const AdminPending = () => {
@@ -13,6 +14,7 @@ const AdminPending = () => {
   const [reminderForm, setReminderForm] = useState(null);
   const [reviewComment, setReviewComment] = useState({});
   const [supervisorData, setSupervisorData] = useState({});
+  const [expandedForms, setExpandedForms] = useState({});
 
   const navigate = useNavigate();
 
@@ -103,6 +105,13 @@ const AdminPending = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const toggleExpand = (formId) => {
+    setExpandedForms(prev => ({
+      ...prev,
+      [formId]: !prev[formId]
+    }));
   };
 
   const handleExportAll = async () => {

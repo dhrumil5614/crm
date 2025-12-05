@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import ReminderList from '../components/ReminderList';
+// import ReminderList from '../components/ReminderList'; // Commented out - reminder feature being fixed
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
@@ -17,8 +17,8 @@ const Dashboard = () => {
             <h2>Welcome, {user?.name}!</h2>
           </div>
 
-          {/* Reminders Section */}
-          <ReminderList />
+          {/* Reminders Section - Commented out while being fixed */}
+          {/* <ReminderList /> */}
 
           <div className="dashboard-nav">
             {!isAdmin && (
