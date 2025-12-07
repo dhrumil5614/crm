@@ -102,6 +102,89 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/forms/reminders
+// @desc    Get all reminders for current user (or all if admin)
+// @access  Private
+router.get('/reminders', protect, async (req, res) => {
+  try {
+    let query = { 'reminder.isSet': true };
+
+    // If not admin, only show reminders for forms owned by user
+    if (req.user.role !== 'admin') {
+      query.userId = req.user._id;
+    }
+
+    const forms = await Form.find(query)
+      .populate('userId', 'name email')
+      .select('_id customerName mobileNumber loanType status reminder userId')
+      .sort({ 'reminder.isCompleted': 1, 'reminder.dateTime': 1 }); // Incomplete first, then by date
+
+    res.status(200).json({
+      success: true,
+      count: forms.length,
+      reminders: forms
+    });
+  } catch (error) {
+    console.error('Get reminders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/forms/:id/reminder/complete
+// @desc    Mark a reminder as complete
+// @access  Private
+router.put('/:id/reminder/complete', protect, async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Check if user is authorized (owner or admin)
+    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to complete this reminder'
+      });
+    }
+
+    if (!form.reminder.isSet) {
+      return res.status(404).json({
+        success: false,
+        message: 'No reminder set on this form'
+      });
+    }
+
+    // Toggle completion status
+    form.reminder.isCompleted = !form.reminder.isCompleted;
+    form.reminder.completedAt = form.reminder.isCompleted ? Date.now() : null;
+    form.reminder.completedBy = form.reminder.isCompleted ? req.user._id : null;
+
+    await form.save();
+
+    res.status(200).json({
+      success: true,
+      message: form.reminder.isCompleted ? 'Reminder marked as complete' : 'Reminder marked as incomplete',
+      reminder: form.reminder
+    });
+  } catch (error) {
+    console.error('Complete reminder error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
 // @route   GET /api/forms/:id
 // @desc    Get single form by ID
 // @access  Private
@@ -374,89 +457,6 @@ router.get('/:id/export', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/forms/reminders
-// @desc    Get all reminders for current user (or all if admin)
-// @access  Private
-router.get('/reminders', protect, async (req, res) => {
-  try {
-    let query = { 'reminder.isSet': true };
-
-    // If not admin, only show reminders for forms owned by user
-    if (req.user.role !== 'admin') {
-      query.userId = req.user._id;
-    }
-
-    const forms = await Form.find(query)
-      .populate('userId', 'name email')
-      .select('_id customerName mobileNumber loanType status reminder userId')
-      .sort({ 'reminder.isCompleted': 1, 'reminder.dateTime': 1 }); // Incomplete first, then by date
-
-    res.status(200).json({
-      success: true,
-      count: forms.length,
-      reminders: forms
-    });
-  } catch (error) {
-    console.error('Get reminders error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @route   PUT /api/forms/:id/reminder/complete
-// @desc    Mark a reminder as complete
-// @access  Private
-router.put('/:id/reminder/complete', protect, async (req, res) => {
-  try {
-    const form = await Form.findById(req.params.id);
-
-    if (!form) {
-      return res.status(404).json({
-        success: false,
-        message: 'Form not found'
-      });
-    }
-
-    // Check if user is authorized (owner or admin)
-    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to complete this reminder'
-      });
-    }
-
-    if (!form.reminder.isSet) {
-      return res.status(400).json({
-        success: false,
-        message: 'No reminder set on this form'
-      });
-    }
-
-    // Toggle completion status
-    form.reminder.isCompleted = !form.reminder.isCompleted;
-    form.reminder.completedAt = form.reminder.isCompleted ? Date.now() : null;
-    form.reminder.completedBy = form.reminder.isCompleted ? req.user._id : null;
-
-    await form.save();
-
-    res.status(200).json({
-      success: true,
-      message: form.reminder.isCompleted ? 'Reminder marked as complete' : 'Reminder marked as incomplete',
-      reminder: form.reminder
-    });
-  } catch (error) {
-    console.error('Complete reminder error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
 // @route   PUT /api/forms/:id/status
 // @desc    Update form progress status
 // @access  Private
@@ -500,6 +500,69 @@ router.put('/:id/status', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Update status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/forms/:id/reminder
+// @desc    Set a reminder on a form (user can set on their own forms)
+// @access  Private
+router.put('/:id/reminder', [
+  body('dateTime').notEmpty().isISO8601().withMessage('Valid date and time is required'),
+  body('message').optional().trim()
+], protect, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Check if user is authorized (owner or admin)
+    if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to set reminder on this form'
+      });
+    }
+
+    // Set reminder
+    form.reminder = {
+      isSet: true,
+      dateTime: new Date(req.body.dateTime),
+      message: req.body.message || '',
+      setBy: req.user._id,
+      setByName: req.user.name,
+      isCompleted: false,
+      completedAt: null,
+      completedBy: null
+    };
+
+    await form.save();
+    await form.populate('userId', 'name email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Reminder set successfully',
+      form
+    });
+  } catch (error) {
+    console.error('Set reminder error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
