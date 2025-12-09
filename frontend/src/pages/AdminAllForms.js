@@ -285,6 +285,16 @@ const AdminAllForms = () => {
             <button onClick={() => setFilter('rejected')}>
               Rejected
             </button>
+            <button
+              onClick={() => navigate('/new-entry')}
+            // style={{
+            //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            //   color: 'white',
+            //   border: 'none'
+            // }}
+            >
+              Create New Entry
+            </button>
           </div>
 
           {error && (

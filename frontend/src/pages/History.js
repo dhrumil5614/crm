@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
 import SetReminderModal from '../components/SetReminderModal';
@@ -14,6 +15,7 @@ const History = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [reminderForm, setReminderForm] = useState(null);
   const [expandedForms, setExpandedForms] = useState({});
+  const { isAdmin } = useAuth();
 
   const navigate = useNavigate();
 
@@ -127,6 +129,28 @@ const History = () => {
             <button onClick={() => setFilter('rejected')}>
               Rejected
             </button>
+            <button
+              onClick={() => navigate('/new-entry')}
+            // style={{
+            //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            //   color: 'white',
+            //   border: 'none'
+            // }}
+            >
+              Create New Entry
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin/all-forms')}
+              // style={{
+              //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              //   color: 'white',
+              //   border: 'none'
+              // }}
+              >
+                All Forms
+              </button>
+            )}
           </div>
 
           {error && (
