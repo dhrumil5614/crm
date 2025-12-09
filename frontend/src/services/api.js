@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || '/api';
+// const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance
 const api = axios.create({
@@ -43,6 +44,7 @@ export const formsAPI = {
   getReminders: () => api.get('/forms/reminders'),
   markReminderComplete: (id) => api.put(`/forms/${id}/reminder/complete`),
   updateProgressStatus: (id, progressStatus) => api.put(`/forms/${id}/status`, { progressStatus }),
+  setReminder: (id, data) => api.post(`/forms/${id}/reminder`, data), // Changed to POST
 };
 
 // Admin API
@@ -52,8 +54,16 @@ export const adminAPI = {
   approveForm: (id, data) => api.put(`/admin/forms/${id}/approve`, data),
   rejectForm: (id, data) => api.put(`/admin/forms/${id}/reject`, data),
   getStats: () => api.get('/admin/stats'),
-  exportAllForms: () => api.get('/admin/forms/export', { responseType: 'blob' }),
-  setReminder: (id, data) => api.put(`/admin/forms/${id}/reminder`, data),
+  exportAllForms: (startDate, endDate) => {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return api.get('/admin/forms/export', {
+      responseType: 'blob',
+      params
+    });
+  },
+  setReminder: (id, data) => api.post(`/admin/forms/${id}/reminder`, data), // Changed to POST
 };
 
 export default api;

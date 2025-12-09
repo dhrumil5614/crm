@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import SetReminderModal from '../components/SetReminderModal';
 import { formsAPI } from '../services/api';
 
 const FormDetails = () => {
@@ -12,6 +13,7 @@ const FormDetails = () => {
     const [remarks, setRemarks] = useState([]);
     const [newRemark, setNewRemark] = useState('');
     const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
+    const [showReminderModal, setShowReminderModal] = useState(false);
 
     useEffect(() => {
         fetchFormDetails();
@@ -109,8 +111,14 @@ const FormDetails = () => {
                             <p><strong>Date:</strong> {new Date(form.submissionDate).toLocaleDateString()}</p>
 
                             <div style={{ marginTop: '1rem' }}>
-                                <button onClick={handleExport} className="btn-primary">
+                                <button onClick={handleExport} className="btn-primary" style={{ marginRight: '0.5rem' }}>
                                     Export to Excel
+                                </button>
+                                <button
+                                    onClick={() => setShowReminderModal(true)}
+                                    style={{ background: '#f39c12', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                >
+                                    Set Reminder
                                 </button>
                             </div>
                         </div>
@@ -174,6 +182,19 @@ const FormDetails = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Set Reminder Modal */}
+            {showReminderModal && (
+                <SetReminderModal
+                    formId={id}
+                    customerName={form.customerName}
+                    onClose={() => setShowReminderModal(false)}
+                    onSuccess={() => {
+                        setShowReminderModal(false);
+                        fetchFormDetails();
+                    }}
+                />
+            )}
         </>
     );
 };

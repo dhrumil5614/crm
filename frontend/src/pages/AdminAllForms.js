@@ -15,6 +15,9 @@ const AdminAllForms = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [reminderForm, setReminderForm] = useState(null);
   const [expandedForms, setExpandedForms] = useState({});
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [dateRangeError, setDateRangeError] = useState('');
 
   const navigate = useNavigate();
 
@@ -29,7 +32,44 @@ const AdminAllForms = () => {
 
     try {
       const response = await adminAPI.getAllForms(filter);
-      setForms(response.data.forms);
+
+      // Sort forms: those with reminders first (by reminder date), then by creation date
+      const sortedForms = (response.data.forms || []).sort((a, b) => {
+        // Helper to get earliest active reminder
+        const getEarliestReminder = (form) => {
+          const activeReminders = [];
+
+          // Check new reminders array
+          if (form.reminders && form.reminders.length > 0) {
+            form.reminders.forEach(r => {
+              if (!r.isCompleted) activeReminders.push(new Date(r.dateTime));
+            });
+          }
+          // Check legacy reminder
+          else if (form.reminder?.isSet && !form.reminder?.isCompleted) {
+            activeReminders.push(new Date(form.reminder.dateTime));
+          }
+
+          return activeReminders.length > 0 ? Math.min(...activeReminders) : null;
+        };
+
+        const aEarliest = getEarliestReminder(a);
+        const bEarliest = getEarliestReminder(b);
+
+        // If both have reminders, sort by earliest reminder date
+        if (aEarliest && bEarliest) {
+          return aEarliest - bEarliest;
+        }
+
+        // Forms with reminders come first
+        if (aEarliest) return -1;
+        if (bEarliest) return 1;
+
+        // Otherwise sort by creation date (newest first)
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      setForms(sortedForms);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch forms');
     }
@@ -80,6 +120,46 @@ const AdminAllForms = () => {
     }
   };
 
+  const handleExportDateRange = async () => {
+    setDateRangeError('');
+
+    // Validate dates
+    if (!startDate || !endDate) {
+      setDateRangeError('Please select both start and end dates');
+      return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start > end) {
+      setDateRangeError('Start date must be before or equal to end date');
+      return;
+    }
+
+    try {
+      const response = await adminAPI.exportAllForms(startDate, endDate);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `forms-${startDate}-to-${endDate}-${Date.now()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to export forms';
+      setDateRangeError(errorMsg);
+      console.error(err);
+    }
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate('');
+    setEndDate('');
+    setDateRangeError('');
+  };
+
   return (
     <>
       <Navbar />
@@ -88,13 +168,87 @@ const AdminAllForms = () => {
           <div className="dashboard-header">
             <h2>All Forms</h2>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={handleExportAll} style={{ background: '#27ae60' }}>
+              {/* <button onClick={handleExportAll} style={{ background: '#27ae60' }}>
                 Export All Forms
-              </button>
+              </button> */}
               <button onClick={() => navigate('/dashboard')}>
                 Back to Dashboard
               </button>
             </div>
+          </div>
+
+          {/* Date Range Export Section */}
+          <div style={{
+            background: 'white',
+            padding: '1.5rem',
+            borderRadius: '10px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{ marginBottom: '1rem', color: '#2c3e50' }}>Export by Date Range</h3>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1', minWidth: '200px' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#34495e', fontWeight: '500' }}>
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div style={{ flex: '1', minWidth: '200px' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#34495e', fontWeight: '500' }}>
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={handleExportDateRange}
+                  className="btn-primary"
+                  style={{ padding: '0.75rem 1.5rem', width: 'auto' }}
+                >
+                  Export
+                </button>
+                <button
+                  onClick={handleClearDateRange}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            {dateRangeError && (
+              <div className="alert alert-error" style={{ marginTop: '1rem', marginBottom: '0' }}>
+                {dateRangeError}
+              </div>
+            )}
           </div>
 
           {stats && (
@@ -167,9 +321,106 @@ const AdminAllForms = () => {
                     <span style={{ fontSize: '1.2rem', transition: 'transform 0.3s', transform: expandedForms[form._id] ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                       ▶
                     </span>
-                    <h3 className="card-title" style={{ margin: 0 }}>{form.customerName || 'N/A'}</h3>
+                    <h3 className="card-title" style={{ margin: 0 }}>
+                      {form.customerName || 'N/A'}
+                    </h3>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                    {/* Reminder Badges - Beautiful design on the right */}
+                    {(() => {
+                      // Get all active reminders
+                      const activeReminders = [];
+
+                      // Check new reminders array
+                      if (form.reminders && form.reminders.length > 0) {
+                        form.reminders.forEach(r => {
+                          if (!r.isCompleted) activeReminders.push(r);
+                        });
+                      }
+                      // Check legacy reminder
+                      else if (form.reminder?.isSet && !form.reminder?.isCompleted) {
+                        activeReminders.push(form.reminder);
+                      }
+
+                      if (activeReminders.length === 0) return null;
+
+                      // Sort by date (earliest first)
+                      activeReminders.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+                      // Show up to 2 badges, then a count
+                      const displayReminders = activeReminders.slice(0, 2);
+                      const remainingCount = activeReminders.length - displayReminders.length;
+
+                      return (
+                        <>
+                          {displayReminders.map((reminder, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.4rem 0.8rem',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                borderRadius: '20px',
+                                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                                animation: 'pulse 2s infinite',
+                                cursor: 'pointer'
+                              }}
+                              title="Click to view/edit reminder"
+                              onClick={() => setReminderForm(form)}
+                            >
+                              <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: '600',
+                                  color: 'white',
+                                  lineHeight: '1',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                }}>
+                                  {new Date(reminder.dateTime).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                                <span style={{
+                                  fontSize: '0.65rem',
+                                  fontWeight: '500',
+                                  color: 'rgba(255,255,255,0.9)',
+                                  lineHeight: '1',
+                                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                }}>
+                                  {new Date(reminder.dateTime).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                          {remainingCount > 0 && (
+                            <div
+                              style={{
+                                padding: '0.4rem 0.6rem',
+                                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                borderRadius: '50%',
+                                color: 'white',
+                                fontSize: '0.75rem',
+                                fontWeight: '700',
+                                boxShadow: '0 2px 6px rgba(245, 87, 108, 0.3)',
+                                cursor: 'pointer'
+                              }}
+                              title={`${remainingCount} more reminder${remainingCount > 1 ? 's' : ''}`}
+                              onClick={() => setReminderForm(form)}
+                            >
+                              +{remainingCount}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     <StatusDropdown
                       formId={form._id}
                       currentStatus={form.progressStatus}
@@ -238,7 +489,7 @@ const AdminAllForms = () => {
                         View Details & Remarks
                       </button>
                       <button
-                        style={{ background: '#f39c12', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        className="btn-primary"
                         onClick={() => setReminderForm(form)}
                       >
                         Set Reminder

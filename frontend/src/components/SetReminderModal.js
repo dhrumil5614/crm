@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { adminAPI } from '../services/api';
+import { formsAPI, adminAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const SetReminderModal = ({ formId, customerName, onClose, onSuccess }) => {
     const [dateTime, setDateTime] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const { isAdmin } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,15 +21,19 @@ const SetReminderModal = ({ formId, customerName, onClose, onSuccess }) => {
         setError('');
 
         try {
-            await adminAPI.setReminder(formId, {
+            // Use appropriate API based on user role
+            const api = isAdmin ? adminAPI : formsAPI;
+            await api.setReminder(formId, {
                 dateTime,
                 message
             });
 
+            alert('Reminder added successfully!');
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to set reminder');
+            console.error('Set reminder error:', err);
+            alert(err.response?.data?.message || 'Failed to add reminder');
         } finally {
             setLoading(false);
         }

@@ -86,6 +86,7 @@ router.get('/', protect, async (req, res) => {
     const forms = await Form.find(query)
       .populate('userId', 'name email')
       .populate('reviewedBy', 'name email')
+      .select('+reminders') // Ensure reminders array is included
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -102,27 +103,73 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+
 // @route   GET /api/forms/reminders
 // @desc    Get all reminders for current user (or all if admin)
 // @access  Private
 router.get('/reminders', protect, async (req, res) => {
   try {
-    let query = { 'reminder.isSet': true };
+    let query = {};
 
     // If not admin, only show reminders for forms owned by user
     if (req.user.role !== 'admin') {
       query.userId = req.user._id;
     }
 
+    // Find forms that have at least one reminder
+    query.$or = [
+      { 'reminders.0': { $exists: true } }, // Has items in reminders array
+      { 'reminder.isSet': true } // Legacy reminder format
+    ];
+
     const forms = await Form.find(query)
       .populate('userId', 'name email')
-      .select('_id customerName mobileNumber loanType status reminder userId')
-      .sort({ 'reminder.isCompleted': 1, 'reminder.dateTime': 1 }); // Incomplete first, then by date
+      .select('_id customerName mobileNumber loanType status reminder reminders userId')
+      .sort({ createdAt: -1 });
+
+    // Flatten reminders from all forms
+    const allReminders = [];
+    forms.forEach(form => {
+      // Add new reminders from reminders array
+      if (form.reminders && form.reminders.length > 0) {
+        form.reminders.forEach(reminder => {
+          if (!reminder.isCompleted) {
+            allReminders.push({
+              _id: form._id,
+              customerName: form.customerName,
+              mobileNumber: form.mobileNumber,
+              loanType: form.loanType,
+              status: form.status,
+              userId: form.userId,
+              reminder: reminder,
+              reminderId: reminder._id
+            });
+          }
+        });
+      }
+      // Also include legacy reminder if it exists
+      else if (form.reminder && form.reminder.isSet && !form.reminder.isCompleted) {
+        allReminders.push({
+          _id: form._id,
+          customerName: form.customerName,
+          mobileNumber: form.mobileNumber,
+          loanType: form.loanType,
+          status: form.status,
+          userId: form.userId,
+          reminder: form.reminder
+        });
+      }
+    });
+
+    // Sort by reminder date (earliest first)
+    allReminders.sort((a, b) => {
+      return new Date(a.reminder.dateTime) - new Date(b.reminder.dateTime);
+    });
 
     res.status(200).json({
       success: true,
-      count: forms.length,
-      reminders: forms
+      count: allReminders.length,
+      reminders: allReminders
     });
   } catch (error) {
     console.error('Get reminders error:', error);
@@ -508,10 +555,10 @@ router.put('/:id/status', protect, async (req, res) => {
   }
 });
 
-// @route   PUT /api/forms/:id/reminder
-// @desc    Set a reminder on a form (user can set on their own forms)
+// @route   POST /api/forms/:id/reminder
+// @desc    Add a new reminder to a form (user can add to their own forms)
 // @access  Private
-router.put('/:id/reminder', [
+router.post('/:id/reminder', [
   body('dateTime').notEmpty().isISO8601().withMessage('Valid date and time is required'),
   body('message').optional().trim()
 ], protect, async (req, res) => {
@@ -541,28 +588,30 @@ router.put('/:id/reminder', [
       });
     }
 
-    // Set reminder
-    form.reminder = {
-      isSet: true,
+    // Add new reminder to reminders array
+    const newReminder = {
       dateTime: new Date(req.body.dateTime),
       message: req.body.message || '',
       setBy: req.user._id,
       setByName: req.user.name,
       isCompleted: false,
       completedAt: null,
-      completedBy: null
+      completedBy: null,
+      createdAt: Date.now()
     };
 
+    form.reminders.push(newReminder);
     await form.save();
     await form.populate('userId', 'name email');
 
     res.status(200).json({
       success: true,
-      message: 'Reminder set successfully',
-      form
+      message: 'Reminder added successfully',
+      form,
+      reminder: form.reminders[form.reminders.length - 1]
     });
   } catch (error) {
-    console.error('Set reminder error:', error);
+    console.error('Add reminder error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

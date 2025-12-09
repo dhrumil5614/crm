@@ -245,9 +245,41 @@ router.get('/stats', async (req, res) => {
 router.get('/forms/export', async (req, res) => {
   try {
     const ExcelJS = require('exceljs');
+    const { startDate, endDate } = req.query;
 
-    // Fetch all forms with populated user data
-    const forms = await Form.find({})
+    // Build query with optional date filtering
+    const query = {};
+    if (startDate && endDate) {
+      // Validate dates
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid date format'
+        });
+      }
+
+      if (start > end) {
+        return res.status(400).json({
+          success: false,
+          message: 'Start date must be before or equal to end date'
+        });
+      }
+
+      // Set time to start of day for startDate and end of day for endDate
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+
+      query.createdAt = {
+        $gte: start,
+        $lte: end
+      };
+    }
+
+    // Fetch forms with populated user data
+    const forms = await Form.find(query)
       .populate('userId', 'name email')
       .populate('reviewedBy', 'name email')
       .sort({ createdAt: -1 });
@@ -283,6 +315,8 @@ router.get('/forms/export', async (req, res) => {
       { header: 'City', key: 'city', width: 15 },
       { header: 'Area Name', key: 'areaName', width: 20 },
       { header: 'Supervisor Remark', key: 'supervisorRemark', width: 30 },
+      { header: 'Supervisor Name', key: 'supervisorName', width: 20 },
+      { header: 'Supervisor ID', key: 'supervisorId', width: 25 },
       { header: 'Review Comment', key: 'reviewComment', width: 30 },
       { header: 'Reviewed By', key: 'reviewedBy', width: 20 },
       { header: 'Reviewed At', key: 'reviewedAt', width: 18 },
@@ -350,7 +384,10 @@ router.get('/forms/export', async (req, res) => {
 
       // Add remark data
       if (form.remarks && form.remarks.length > 0) {
-        form.remarks.forEach((remark, index) => {
+        // Sort remarks by date ascending (Oldest -> Newest)
+        const sortedRemarks = [...form.remarks].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        sortedRemarks.forEach((remark, index) => {
           const remarkNum = index + 1;
           rowData[`remark${remarkNum}Sender`] = remark.senderName || '';
           rowData[`remark${remarkNum}Role`] = remark.senderRole || '';
@@ -401,10 +438,10 @@ router.get('/forms/export', async (req, res) => {
   }
 });
 
-// @route   PUT /api/admin/forms/:id/reminder
-// @desc    Set a reminder on a form
+// @route   POST /api/admin/forms/:id/reminder
+// @desc    Add a reminder to a form
 // @access  Private/Admin
-router.put('/forms/:id/reminder', [
+router.post('/forms/:id/reminder', [
   body('dateTime').notEmpty().isISO8601().withMessage('Valid date and time is required'),
   body('message').optional().trim()
 ], async (req, res) => {
@@ -426,28 +463,30 @@ router.put('/forms/:id/reminder', [
       });
     }
 
-    // Set reminder
-    form.reminder = {
-      isSet: true,
+    // Add new reminder to reminders array
+    const newReminder = {
       dateTime: new Date(req.body.dateTime),
       message: req.body.message || '',
       setBy: req.user._id,
       setByName: req.user.name,
       isCompleted: false,
       completedAt: null,
-      completedBy: null
+      completedBy: null,
+      createdAt: Date.now()
     };
 
+    form.reminders.push(newReminder);
     await form.save();
     await form.populate('userId', 'name email');
 
     res.status(200).json({
       success: true,
-      message: 'Reminder set successfully',
-      form
+      message: 'Reminder added successfully',
+      form,
+      reminder: form.reminders[form.reminders.length - 1]
     });
   } catch (error) {
-    console.error('Set reminder error:', error);
+    console.error('Add reminder error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

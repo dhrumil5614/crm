@@ -56,11 +56,12 @@ const AdminPending = () => {
   };
 
   const handleReject = async (id) => {
-    const comment = reviewComment[id];
-    if (!comment || comment.trim() === '') {
-      alert('Please provide a reason for rejection');
-      return;
-    }
+    // const comment = reviewComment[id];
+    // if (!comment || comment.trim() === '') {
+    //   alert('Please provide a reason for rejection');
+    //   return;
+    // }
+    const comment = 'Rejected'; // Default comment since field is hidden
 
     if (!window.confirm('Are you sure you want to reject this form?')) {
       return;
@@ -198,13 +199,13 @@ const AdminPending = () => {
                 </div>
 
                 <div className="review-section">
-                  <h4>Review Comment:</h4>
+                  {/* <h4>Review Comment:</h4>
                   <textarea
                     placeholder="Add a comment (required for rejection, optional for approval)"
                     value={reviewComment[form._id] || ''}
                     onChange={(e) => handleCommentChange(form._id, e.target.value)}
                     style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-                  />
+                  /> */}
 
                   <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Supervisor Information:</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>

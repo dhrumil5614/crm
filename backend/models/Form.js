@@ -142,7 +142,45 @@ const formSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // Reminder/Notification system
+  // Reminder/Notification system - Multiple reminders supported
+  reminders: [{
+    dateTime: {
+      type: Date,
+      required: true
+    },
+    message: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    setBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    setByName: {
+      type: String,
+      required: true
+    },
+    isCompleted: {
+      type: Boolean,
+      default: false
+    },
+    completedAt: {
+      type: Date,
+      default: null
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  // Legacy single reminder field (for backward compatibility)
   reminder: {
     isSet: {
       type: Boolean,
