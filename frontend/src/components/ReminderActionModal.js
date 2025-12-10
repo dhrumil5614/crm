@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { formsAPI } from '../services/api';
 
-const ReminderActionModal = ({ reminder, formId, onClose, onUpdate }) => {
+const ReminderActionModal = ({ reminder, formId, isLegacy, onClose, onUpdate }) => {
     const [status, setStatus] = useState(reminder.status || (reminder.isCompleted ? 'completed' : 'pending'));
     const [message, setMessage] = useState(reminder.message || '');
     const [newDate, setNewDate] = useState('');
@@ -22,7 +22,7 @@ const ReminderActionModal = ({ reminder, formId, onClose, onUpdate }) => {
         setError('');
 
         try {
-            if (reminder.isLegacy) {
+            if (isLegacy || reminder.isLegacy) {
                 if (status === 'rescheduled') {
                     await formsAPI.setReminder(formId, { dateTime: newDate, message: message });
                     await formsAPI.markReminderComplete(formId);
@@ -39,8 +39,10 @@ const ReminderActionModal = ({ reminder, formId, onClose, onUpdate }) => {
             onUpdate();
             onClose();
         } catch (err) {
-            setError('Failed to update reminder');
-            console.error(err);
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to update reminder';
+            setError(errorMsg);
+            console.error('Reminder update error:', err);
+            console.error('Error details:', err.response?.data);
         } finally {
             setLoading(false);
         }

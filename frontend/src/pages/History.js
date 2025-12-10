@@ -210,7 +210,7 @@ const History = () => {
                       }
                       // Check legacy reminder
                       else if (form.reminder?.isSet && !form.reminder?.isCompleted) {
-                        activeReminders.push(form.reminder);
+                        activeReminders.push({ ...form.reminder, isLegacy: true });
                       }
 
                       if (activeReminders.length === 0) return null;
@@ -239,7 +239,7 @@ const History = () => {
                                 cursor: 'pointer'
                               }}
                               title="Click to view/edit reminder"
-                              onClick={() => setActionReminder({ reminder, formId: form._id })}
+                              onClick={() => setActionReminder({ reminder, formId: form._id, isLegacy: reminder.isLegacy })}
                             >
                               <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
@@ -407,6 +407,7 @@ const History = () => {
         <ReminderActionModal
           reminder={actionReminder.reminder}
           formId={actionReminder.formId}
+          isLegacy={actionReminder.isLegacy}
           onClose={() => setActionReminder(null)}
           onUpdate={() => {
             setActionReminder(null);

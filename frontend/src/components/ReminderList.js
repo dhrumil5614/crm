@@ -188,6 +188,7 @@ const ReminderList = () => {
                 <ReminderActionModal
                     reminder={selectedReminder.reminder}
                     formId={selectedReminder.formId}
+                    isLegacy={selectedReminder.isLegacy}
                     onClose={() => setSelectedReminder(null)}
                     onUpdate={() => {
                         setSelectedReminder(null);
