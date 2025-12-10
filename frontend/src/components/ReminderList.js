@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formsAPI } from '../services/api';
+import ReminderActionModal from './ReminderActionModal';
 
 const ReminderList = () => {
     const [reminders, setReminders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [selectedReminder, setSelectedReminder] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -21,17 +23,6 @@ const ReminderList = () => {
             console.error(err);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleToggleComplete = async (id) => {
-        try {
-            await formsAPI.markReminderComplete(id);
-            // Refresh reminders to get updated sort order
-            fetchReminders();
-        } catch (err) {
-            alert('Failed to update reminder');
-            console.error(err);
         }
     };
 
@@ -60,7 +51,7 @@ const ReminderList = () => {
     };
 
     const getReminderStyle = (reminder) => {
-        if (reminder.reminder.isCompleted) {
+        if (reminder.reminder.status === 'completed' || reminder.reminder.isCompleted) {
             return {
                 backgroundColor: '#f5f5f5',
                 borderLeft: '4px solid #95a5a6',
@@ -102,7 +93,7 @@ const ReminderList = () => {
     }
 
     if (reminders.length === 0) {
-        return null; // Don't show anything if no reminders
+        return null;
     }
 
     return (
@@ -114,33 +105,30 @@ const ReminderList = () => {
                 {reminders.map((reminder) => (
                     <div
                         key={reminder._id}
-                        style={{
-                            ...getReminderStyle(reminder),
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            transition: 'all 0.3s ease'
-                        }}
+                        className="reminder-card"
+                        style={getReminderStyle(reminder)}
+                        onClick={() => setSelectedReminder(reminder)}
                     >
-                        {/* Checkbox */}
-                        <input
-                            type="checkbox"
-                            checked={reminder.reminder.isCompleted}
-                            onChange={() => handleToggleComplete(reminder._id)}
-                            style={{
-                                width: '20px',
-                                height: '20px',
-                                cursor: 'pointer'
-                            }}
-                        />
+                        {/* Status Badge */}
+                        <div style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '4px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            backgroundColor: 'white',
+                            color: '#2c3e50',
+                            border: '1px solid #ddd'
+                        }}>
+                            {reminder.reminder.status ?
+                                reminder.reminder.status.charAt(0).toUpperCase() + reminder.reminder.status.slice(1) :
+                                (reminder.reminder.isCompleted ? 'Completed' : 'Pending')}
+                        </div>
 
                         {/* Reminder Content */}
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                 {/* Indicator */}
-                                {!reminder.reminder.isCompleted && (
+                                {!reminder.reminder.isCompleted && reminder.reminder.status !== 'completed' && (
                                     <span style={{ fontSize: '1.2rem' }}>
                                         {isOverdue(reminder.reminder.dateTime) ? '🔴' : isToday(reminder.reminder.dateTime) ? '🟡' : '🟢'}
                                     </span>
@@ -149,7 +137,7 @@ const ReminderList = () => {
                                 {/* Date/Time */}
                                 <strong style={{
                                     color: '#2c3e50',
-                                    textDecoration: reminder.reminder.isCompleted ? 'line-through' : 'none'
+                                    textDecoration: (reminder.reminder.isCompleted || reminder.reminder.status === 'completed') ? 'line-through' : 'none'
                                 }}>
                                     {formatDateTime(reminder.reminder.dateTime)}
                                 </strong>
@@ -166,7 +154,7 @@ const ReminderList = () => {
                                     margin: '0.25rem 0 0 0',
                                     color: '#34495e',
                                     fontSize: '0.9rem',
-                                    textDecoration: reminder.reminder.isCompleted ? 'line-through' : 'none'
+                                    textDecoration: (reminder.reminder.isCompleted || reminder.reminder.status === 'completed') ? 'line-through' : 'none'
                                 }}>
                                     {reminder.reminder.message}
                                 </p>
@@ -175,7 +163,10 @@ const ReminderList = () => {
 
                         {/* View Form Button */}
                         <button
-                            onClick={() => handleViewForm(reminder._id)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewForm(reminder.formId);
+                            }}
                             style={{
                                 padding: '0.5rem 1rem',
                                 background: '#3498db',
@@ -192,6 +183,18 @@ const ReminderList = () => {
                     </div>
                 ))}
             </div>
+
+            {selectedReminder && (
+                <ReminderActionModal
+                    reminder={selectedReminder.reminder}
+                    formId={selectedReminder.formId}
+                    onClose={() => setSelectedReminder(null)}
+                    onUpdate={() => {
+                        setSelectedReminder(null);
+                        fetchReminders();
+                    }}
+                />
+            )}
         </div>
     );
 };

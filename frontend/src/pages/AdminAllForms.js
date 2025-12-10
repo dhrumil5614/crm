@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
 import SetReminderModal from '../components/SetReminderModal';
+import ReminderActionModal from '../components/ReminderActionModal';
 import StatusDropdown from '../components/StatusDropdown';
 import { adminAPI } from '../services/api';
 
@@ -14,6 +15,7 @@ const AdminAllForms = () => {
   const [filter, setFilter] = useState('');
   const [selectedForm, setSelectedForm] = useState(null);
   const [reminderForm, setReminderForm] = useState(null);
+  const [actionReminder, setActionReminder] = useState(null);
   const [expandedForms, setExpandedForms] = useState({});
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -378,7 +380,7 @@ const AdminAllForms = () => {
                                 cursor: 'pointer'
                               }}
                               title="Click to view/edit reminder"
-                              onClick={() => setReminderForm(form)}
+                              onClick={() => setActionReminder({ reminder, formId: form._id })}
                             >
                               <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
@@ -533,6 +535,19 @@ const AdminAllForms = () => {
           onClose={() => setReminderForm(null)}
           onSuccess={() => {
             setReminderForm(null);
+            fetchForms();
+          }}
+        />
+      )}
+
+      {/* Reminder Action Modal */}
+      {actionReminder && (
+        <ReminderActionModal
+          reminder={actionReminder.reminder}
+          formId={actionReminder.formId}
+          onClose={() => setActionReminder(null)}
+          onUpdate={() => {
+            setActionReminder(null);
             fetchForms();
           }}
         />

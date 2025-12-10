@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import FormDetailModal from '../components/FormDetailModal';
 import SetReminderModal from '../components/SetReminderModal';
+import ReminderActionModal from '../components/ReminderActionModal';
 import StatusDropdown from '../components/StatusDropdown';
 import { formsAPI } from '../services/api';
 
@@ -14,6 +15,7 @@ const History = () => {
   const [filter, setFilter] = useState('');
   const [selectedForm, setSelectedForm] = useState(null);
   const [reminderForm, setReminderForm] = useState(null);
+  const [actionReminder, setActionReminder] = useState(null);
   const [expandedForms, setExpandedForms] = useState({});
   const { isAdmin } = useAuth();
 
@@ -237,7 +239,7 @@ const History = () => {
                                 cursor: 'pointer'
                               }}
                               title="Click to view/edit reminder"
-                              onClick={() => setReminderForm(form)}
+                              onClick={() => setActionReminder({ reminder, formId: form._id })}
                             >
                               <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
@@ -395,6 +397,19 @@ const History = () => {
           onClose={() => setReminderForm(null)}
           onSuccess={() => {
             setReminderForm(null);
+            fetchForms();
+          }}
+        />
+      )}
+
+      {/* Reminder Action Modal */}
+      {actionReminder && (
+        <ReminderActionModal
+          reminder={actionReminder.reminder}
+          formId={actionReminder.formId}
+          onClose={() => setActionReminder(null)}
+          onUpdate={() => {
+            setActionReminder(null);
             fetchForms();
           }}
         />

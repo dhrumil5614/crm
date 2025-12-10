@@ -284,9 +284,13 @@ router.get('/forms/export', async (req, res) => {
       .populate('reviewedBy', 'name email')
       .sort({ createdAt: -1 });
 
-    // Find maximum number of remarks across all forms
+    // Find maximum number of remarks and reminders across all forms
     const maxRemarks = forms.reduce((max, form) => {
       return Math.max(max, form.remarks ? form.remarks.length : 0);
+    }, 0);
+
+    const maxReminders = forms.reduce((max, form) => {
+      return Math.max(max, form.reminders ? form.reminders.length : 0);
     }, 0);
 
     // Create workbook and worksheet
@@ -349,8 +353,28 @@ router.get('/forms/export', async (req, res) => {
       });
     }
 
+    // Add dynamic notification columns
+    const notificationColumns = [];
+    for (let i = 1; i <= maxReminders; i++) {
+      notificationColumns.push({
+        header: `Notification ${i} - Date`,
+        key: `notification${i}Date`,
+        width: 18
+      });
+      notificationColumns.push({
+        header: `Notification ${i} - Message`,
+        key: `notification${i}Message`,
+        width: 30
+      });
+      notificationColumns.push({
+        header: `Notification ${i} - Status`,
+        key: `notification${i}Status`,
+        width: 15
+      });
+    }
+
     // Set all columns
-    worksheet.columns = [...fixedColumns, ...remarkColumns];
+    worksheet.columns = [...fixedColumns, ...remarkColumns, ...notificationColumns];
 
     // Add data rows
     forms.forEach(form => {
@@ -396,6 +420,19 @@ router.get('/forms/export', async (req, res) => {
         });
       }
 
+      // Add notification data
+      if (form.reminders && form.reminders.length > 0) {
+        // Sort reminders by date ascending
+        const sortedReminders = [...form.reminders].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+        sortedReminders.forEach((reminder, index) => {
+          const reminderNum = index + 1;
+          rowData[`notification${reminderNum}Date`] = reminder.dateTime ? new Date(reminder.dateTime).toLocaleString() : '';
+          rowData[`notification${reminderNum}Message`] = reminder.message || '';
+          rowData[`notification${reminderNum}Status`] = reminder.status || (reminder.isCompleted ? 'completed' : 'pending');
+        });
+      }
+
       worksheet.addRow(rowData);
     });
 
@@ -412,7 +449,7 @@ router.get('/forms/export', async (req, res) => {
     // Auto-filter
     worksheet.autoFilter = {
       from: { row: 1, column: 1 },
-      to: { row: 1, column: fixedColumns.length + remarkColumns.length }
+      to: { row: 1, column: fixedColumns.length + remarkColumns.length + notificationColumns.length }
     };
 
     // Freeze first row

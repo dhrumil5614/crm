@@ -43,6 +43,7 @@ export const formsAPI = {
   exportForm: (id) => api.get(`/forms/${id}/export`, { responseType: 'blob' }),
   getReminders: () => api.get('/forms/reminders'),
   markReminderComplete: (id) => api.put(`/forms/${id}/reminder/complete`),
+  updateReminderStatus: (formId, reminderId, data) => api.put(`/forms/${formId}/reminders/${reminderId}/status`, data),
   updateProgressStatus: (id, progressStatus) => api.put(`/forms/${id}/status`, { progressStatus }),
   setReminder: (id, data) => api.post(`/forms/${id}/reminder`, data), // Changed to POST
 };

@@ -133,9 +133,16 @@ router.get('/reminders', protect, async (req, res) => {
       // Add new reminders from reminders array
       if (form.reminders && form.reminders.length > 0) {
         form.reminders.forEach(reminder => {
-          if (!reminder.isCompleted) {
+          // Include all reminders, not just incomplete ones, so we can see history if needed
+          // But for the dashboard list, maybe we only want active ones? 
+          // The user said "check the reminders", implying they want to interact with them.
+          // Let's return all non-completed/non-rescheduled ones for the main list, 
+          // or maybe filter on frontend. 
+          // For now, let's include 'pending' and 'incomplete' ones.
+          if (reminder.status !== 'completed' && reminder.status !== 'rescheduled' && !reminder.isCompleted) {
             allReminders.push({
-              _id: form._id,
+              _id: reminder._id, // Use reminder ID as unique key
+              formId: form._id,
               customerName: form.customerName,
               mobileNumber: form.mobileNumber,
               loanType: form.loanType,
@@ -147,16 +154,18 @@ router.get('/reminders', protect, async (req, res) => {
           }
         });
       }
-      // Also include legacy reminder if it exists
+      // Also include legacy reminder if it exists and is active
       else if (form.reminder && form.reminder.isSet && !form.reminder.isCompleted) {
         allReminders.push({
-          _id: form._id,
+          _id: form._id + '_legacy', // Unique ID for legacy
+          formId: form._id,
           customerName: form.customerName,
           mobileNumber: form.mobileNumber,
           loanType: form.loanType,
           status: form.status,
           userId: form.userId,
-          reminder: form.reminder
+          reminder: form.reminder,
+          isLegacy: true
         });
       }
     });
@@ -181,11 +190,12 @@ router.get('/reminders', protect, async (req, res) => {
   }
 });
 
-// @route   PUT /api/forms/:id/reminder/complete
-// @desc    Mark a reminder as complete
+// @route   PUT /api/forms/:id/reminders/:reminderId/status
+// @desc    Update reminder status (completed, incomplete, rescheduled) and message
 // @access  Private
-router.put('/:id/reminder/complete', protect, async (req, res) => {
+router.put('/:id/reminders/:reminderId/status', protect, async (req, res) => {
   try {
+    const { status, dateTime, message } = req.body;
     const form = await Form.findById(req.params.id);
 
     if (!form) {
@@ -199,31 +209,75 @@ router.put('/:id/reminder/complete', protect, async (req, res) => {
     if (form.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to complete this reminder'
+        message: 'Not authorized to update this reminder'
       });
     }
 
-    if (!form.reminder.isSet) {
+    // Find the reminder
+    const reminder = form.reminders.id(req.params.reminderId);
+    if (!reminder) {
       return res.status(404).json({
         success: false,
-        message: 'No reminder set on this form'
+        message: 'Reminder not found'
       });
     }
 
-    // Toggle completion status
-    form.reminder.isCompleted = !form.reminder.isCompleted;
-    form.reminder.completedAt = form.reminder.isCompleted ? Date.now() : null;
-    form.reminder.completedBy = form.reminder.isCompleted ? req.user._id : null;
+    // Update message if provided
+    if (message !== undefined) {
+      reminder.message = message;
+    }
+
+    // Update status
+    if (status) {
+      reminder.status = status;
+
+      if (status === 'completed') {
+        reminder.isCompleted = true;
+        reminder.completedAt = Date.now();
+        reminder.completedBy = req.user._id;
+      } else if (status === 'incomplete') {
+        reminder.isCompleted = false;
+        reminder.completedAt = null;
+        reminder.completedBy = null;
+      } else if (status === 'rescheduled') {
+        // If rescheduled, we might want to create a NEW reminder and mark this one as rescheduled
+        // OR just update the date. 
+        // Creating a new one preserves history.
+        // Let's update the current one's status to 'rescheduled' and create a new one.
+
+        if (!dateTime) {
+          return res.status(400).json({
+            success: false,
+            message: 'New date and time required for rescheduling'
+          });
+        }
+
+        // Mark current as rescheduled/completed
+        reminder.isCompleted = true; // Effectively done
+        reminder.completedAt = Date.now();
+        reminder.completedBy = req.user._id;
+
+        // Create new reminder
+        form.reminders.push({
+          dateTime: new Date(dateTime),
+          message: message || reminder.message, // Use new message or keep old
+          setBy: req.user._id,
+          setByName: req.user.name,
+          status: 'pending',
+          isCompleted: false
+        });
+      }
+    }
 
     await form.save();
 
     res.status(200).json({
       success: true,
-      message: form.reminder.isCompleted ? 'Reminder marked as complete' : 'Reminder marked as incomplete',
-      reminder: form.reminder
+      message: 'Reminder updated successfully',
+      reminders: form.reminders
     });
   } catch (error) {
-    console.error('Complete reminder error:', error);
+    console.error('Update reminder status error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

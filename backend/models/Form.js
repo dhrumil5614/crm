@@ -162,6 +162,11 @@ const formSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'incomplete', 'rescheduled'],
+      default: 'pending'
+    },
     isCompleted: {
       type: Boolean,
       default: false
