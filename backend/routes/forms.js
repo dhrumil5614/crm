@@ -14,8 +14,7 @@ router.post(
   [
     body('mobileNumber').trim().notEmpty().withMessage('Mobile number is required'),
     body('customerName').trim().notEmpty().withMessage('Customer name is required'),
-    body('loanType').isIn(['Home Loan', 'Personal Loan', 'Car Loan', 'Business Loan', 'Education Loan', 'Gold Loan', 'Other']).withMessage('Invalid loan type'),
-    body('interestedStatus').isIn(['Yes', 'No']).withMessage('Interested status must be Yes or No')
+    body('product').isIn(['Business Loan', 'Machine Loan', 'Solar Loan', 'One loan', 'UBL']).withMessage('Invalid product type')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -27,7 +26,22 @@ router.post(
     }
 
     try {
-      const { mobileNumber, customerName, loanType, interestedStatus, agentRemarks } = req.body;
+      const {
+        product,
+        mainSource,
+        customerName,
+        leadId,
+        companyName,
+        mobileNumber,
+        alternateNumber,
+        loanAmount,
+        city,
+        state,
+        inFutureMonth,
+        agentRemarks,
+        businessType,
+        propertyType
+      } = req.body;
 
       // Auto-generate date and time
       const now = new Date();
@@ -40,11 +54,21 @@ router.post(
 
       const form = await Form.create({
         userId: req.user._id,
-        mobileNumber,
+        month: now, // Auto-generated
+        product: product || 'Business Loan',
+        mainSource: mainSource || 'Call centre',
         customerName,
-        loanType,
-        interestedStatus,
+        leadId: leadId || '',
+        companyName: companyName || '',
+        mobileNumber,
+        alternateNumber: alternateNumber || '',
+        loanAmount: loanAmount || 0,
+        city: city || '',
+        state: state || '',
+        inFutureMonth: inFutureMonth || '',
         agentRemarks: agentRemarks || '',
+        businessType: businessType || '',
+        propertyType: propertyType || '',
         agentName,
         agentId,
         submissionDate,
@@ -124,7 +148,7 @@ router.get('/reminders', protect, async (req, res) => {
 
     const forms = await Form.find(query)
       .populate('userId', 'name email')
-      .select('_id customerName mobileNumber loanType status reminder reminders userId')
+      .select('_id customerName mobileNumber product status reminder reminders userId')
       .sort({ createdAt: -1 });
 
     // Flatten reminders from all forms
@@ -145,7 +169,7 @@ router.get('/reminders', protect, async (req, res) => {
               formId: form._id,
               customerName: form.customerName,
               mobileNumber: form.mobileNumber,
-              loanType: form.loanType,
+              product: form.product,
               status: form.status,
               userId: form.userId,
               reminder: reminder,
@@ -161,7 +185,7 @@ router.get('/reminders', protect, async (req, res) => {
           formId: form._id,
           customerName: form.customerName,
           mobileNumber: form.mobileNumber,
-          loanType: form.loanType,
+          product: form.product,
           status: form.status,
           userId: form.userId,
           reminder: form.reminder,
@@ -503,20 +527,33 @@ router.get('/:id/export', protect, async (req, res) => {
       { header: 'Value', key: 'value', width: 50 }
     ];
 
+    // Format month as "Month Year" (e.g., "December 2025")
+    const monthYear = form.month ? new Date(form.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
+
     worksheet.addRows([
       { field: 'Form ID', value: form._id.toString() },
-      { field: 'Status', value: form.status },
+      { field: 'Month', value: monthYear },
+      { field: 'Product', value: form.product },
+      { field: 'Main Source', value: form.mainSource },
       { field: 'Customer Name', value: form.customerName },
-      { field: 'Mobile Number', value: form.mobileNumber },
-      { field: 'Loan Type', value: form.loanType },
-      { field: 'Interested Status', value: form.interestedStatus },
+      { field: 'Lead ID / GL ID', value: form.leadId },
+      { field: 'Company Name', value: form.companyName },
+      { field: 'Contact Number', value: form.mobileNumber },
+      { field: 'Alternate Number', value: form.alternateNumber },
+      { field: 'Loan Amount', value: form.loanAmount },
+      { field: 'City', value: form.city },
+      { field: 'State', value: form.state },
+      { field: 'In Future Month', value: form.inFutureMonth },
+      { field: 'Remarks', value: form.agentRemarks },
+      { field: 'Business Type', value: form.businessType },
+      { field: 'Property Type', value: form.propertyType },
+      { field: 'Status', value: form.status },
       { field: 'Agent Name', value: form.agentName },
       { field: 'Submission Date', value: new Date(form.submissionDate).toLocaleDateString() },
       { field: 'Submission Time', value: form.submissionTime },
       { field: 'Supervisor Name', value: form.supervisorName },
       { field: 'Supervisor Remark', value: form.supervisorRemark },
       { field: 'ASM Name', value: form.asmName },
-      { field: 'City', value: form.city },
       { field: 'Area Name', value: form.areaName }
     ]);
 

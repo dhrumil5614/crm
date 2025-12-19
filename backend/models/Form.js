@@ -6,32 +6,128 @@ const formSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  // User side fields
-  mobileNumber: {
-    type: String,
-    required: [true, 'Please provide a mobile number'],
-    trim: true
+  // Auto-generated month field (system entry)
+  month: {
+    type: Date,
+    default: Date.now
   },
+
+  // Product - Dropdown (required)
+  product: {
+    type: String,
+    required: [true, 'Please provide product type'],
+    enum: ['Business Loan', 'Machine Loan', 'Solar Loan', 'One loan', 'UBL'],
+    default: 'Business Loan'
+  },
+
+  // Main Source - default "Call centre"
+  mainSource: {
+    type: String,
+    trim: true,
+    default: 'Call centre'
+  },
+
+  // Customer Name (required)
   customerName: {
     type: String,
     required: [true, 'Please provide customer name'],
     trim: true
   },
-  loanType: {
+
+  // Lead ID / GL ID
+  leadId: {
     type: String,
-    required: [true, 'Please provide loan type'],
-    enum: ['Home Loan', 'Personal Loan', 'Car Loan', 'Business Loan', 'Education Loan', 'Gold Loan', 'Other'],
-    default: 'Other'
+    trim: true,
+    default: ''
   },
-  interestedStatus: {
+
+  // Company Name
+  companyName: {
     type: String,
-    required: [true, 'Please provide interested status'],
-    enum: ['Yes', 'No'],
-    default: 'No'
+    trim: true,
+    default: ''
   },
+
+  // Contact Number (required)
+  mobileNumber: {
+    type: String,
+    required: [true, 'Please provide a mobile number'],
+    trim: true
+  },
+
+  // Alternate Number
+  alternateNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // Loan Amount
+  loanAmount: {
+    type: Number,
+    default: 0
+  },
+
+  // City
+  city: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // State
+  state: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // In Future Month - with year logic
+  inFutureMonth: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // Remarks / Agent Remarks
   agentRemarks: {
     type: String,
     trim: true,
+    default: ''
+  },
+
+  // Business Type
+  businessType: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  // Property Type - Dropdown with status list
+  propertyType: {
+    type: String,
+    enum: [
+      'already Sanctioned / Disbursed',
+      'ASM Visit Done- Documents Pending',
+      'Case Disbursed',
+      'Case Logged In',
+      'Case Rejected - Credit Manager',
+      'Case Sanctioned',
+      'Competitor offer taken',
+      'Customer Not Contactable',
+      'Customer Put on Hold Post Login',
+      'Follow Ups',
+      'High Charges',
+      'Low Turn Over',
+      'Machine not Finalised',
+      'Meeting Fixed',
+      'No Revert from ASM',
+      'Not Doable',
+      'Not Interested',
+      'On Hold-Post Sanction',
+      'Will take in future',
+      ''
+    ],
     default: ''
   },
   // Auto-generated agent info
@@ -82,11 +178,7 @@ const formSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  city: {
-    type: String,
-    trim: true,
-    default: ''
-  },
+
   areaName: {
     type: String,
     trim: true,
