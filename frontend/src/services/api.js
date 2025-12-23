@@ -45,6 +45,7 @@ export const formsAPI = {
   markReminderComplete: (id) => api.put(`/forms/${id}/reminder/complete`),
   updateReminderStatus: (formId, reminderId, data) => api.put(`/forms/${formId}/reminders/${reminderId}/status`, data),
   updateProgressStatus: (id, progressStatus) => api.put(`/forms/${id}/status`, { progressStatus }),
+  updateForm: (id, data) => api.put(`/forms/${id}`, data), // Generic update
   setReminder: (id, data) => api.post(`/forms/${id}/reminder`, data), // Changed to POST
 };
 

@@ -554,7 +554,19 @@ router.get('/:id/export', protect, async (req, res) => {
       { field: 'Supervisor Name', value: form.supervisorName },
       { field: 'Supervisor Remark', value: form.supervisorRemark },
       { field: 'ASM Name', value: form.asmName },
-      { field: 'Area Name', value: form.areaName }
+      { field: 'Area Name', value: form.areaName },
+      // New Admin Fields
+      { field: 'Campaign', value: form.campaign },
+      { field: 'Lead Created Vertical', value: form.leadCreatedVertical },
+      { field: 'Data Received Date', value: form.dataReceivedDate ? new Date(form.dataReceivedDate).toLocaleDateString() : '' },
+      { field: 'Assigned Name', value: form.assignedName },
+      { field: 'ASM Mobile', value: form.asmMobileNumber },
+      { field: 'Date (Admin)', value: form.adminDate ? new Date(form.adminDate).toLocaleDateString() : '' },
+      { field: 'Best Dispo', value: form.bestDispo },
+      { field: 'Lead Status', value: form.leadStatus },
+      { field: 'Lead Category', value: form.leadCategory },
+      { field: 'ASM Status', value: form.asmStatus },
+      { field: 'ASM Remark', value: form.asmRemark }
     ]);
 
     // Add empty row
@@ -703,6 +715,61 @@ router.post('/:id/reminder', [
     });
   } catch (error) {
     console.error('Add reminder error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/forms/:id
+// @desc    Update form details (Admin only or specific fields)
+// @access  Private
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+
+    // Check if user is authorized (Admin only for these specific fields usually, or owner)
+    // For now, allow admin to update everything, owner to update nothing via this route (since edits are usually restricted)
+    // The requirement says "admin side", so we restrict to admin.
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update form details'
+      });
+    }
+
+    const fieldsToUpdate = [
+      'campaign', 'leadCreatedVertical', 'dataReceivedDate', 'assignedName',
+      'asmMobileNumber', 'adminDate', 'bestDispo', 'leadStatus', 'leadCategory',
+      'asmStatus', 'asmRemark', 'inFutureMonth', 'product', 'companyName',
+      'customerName', 'mobileNumber', 'city', 'state', 'loanAmount', 'businessType',
+      'propertyType', 'mainSource', 'leadId'
+    ];
+
+    fieldsToUpdate.forEach(field => {
+      if (req.body[field] !== undefined) {
+        form[field] = req.body[field];
+      }
+    });
+
+    await form.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Form updated successfully',
+      form
+    });
+  } catch (error) {
+    console.error('Update form error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

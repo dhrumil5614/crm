@@ -178,6 +178,81 @@ const formSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  // --- Admin / Lead Tracking Fields ---
+  campaign: {
+    type: String,
+    enum: ['CEF', 'EEF', 'One Loan', 'REF', 'SBF', 'UBL', ''],
+    default: ''
+  },
+  leadCreatedVertical: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  dataReceivedDate: {
+    type: Date,
+    default: null
+  },
+  assignedName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  asmMobileNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  adminDate: { // "Date" label in admin view
+    type: Date,
+    default: null
+  },
+  bestDispo: {
+    type: String,
+    trim: true,
+    default: 'Lead Generated' // Fixed value default
+  },
+  leadStatus: { // "status" (dropdown) in admin view
+    type: String,
+    enum: ['Closed', 'follow up', 'open', 'Win', ''],
+    default: ''
+  },
+  leadCategory: { // "category" (dropdown) in admin view
+    type: String,
+    enum: ['closed', 'follow up', 'Win', ''],
+    default: ''
+  },
+  asmStatus: { // "ASM - Status" in admin view
+    type: String,
+    enum: [
+      'already Sanctioned / Disbursed',
+      'ASM Visit Done- Documents Pending',
+      'Case Disbursed',
+      'Case Logged In',
+      'Case Rejected - Credit Manager',
+      'Case Sanctioned',
+      'Competitor offer taken',
+      'Customer Not Contactable',
+      'Customer Put on Hold Post Login',
+      'Follow Ups',
+      'High Charges',
+      'Low Turn Over',
+      'Machine not Finalised',
+      'Meeting Fixed',
+      'No Revert from ASM',
+      'Not Doable',
+      'Not Interested',
+      'On Hold-Post Sanction',
+      'Will take in future',
+      ''
+    ],
+    default: ''
+  },
+  asmRemark: {
+    type: String,
+    trim: true,
+    default: ''
+  },
 
   areaName: {
     type: String,

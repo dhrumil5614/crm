@@ -490,6 +490,27 @@ const AdminAllForms = () => {
                         </div>
                       )}
 
+                      {/* --- ADMIN LEAD TRACKING DETAILS --- */}
+                      {form.status !== 'pending' && (
+                        <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#eef2f7', borderRadius: '4px' }}>
+                          <h4 style={{ marginBottom: '0.5rem', color: '#2c3e50' }}>Lead Tracking Details:</h4>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                            <div><strong>Campaign:</strong> {form.campaign || 'N/A'}</div>
+                            <div><strong>Vertical:</strong> {form.leadCreatedVertical || 'N/A'}</div>
+                            <div><strong>Data Date:</strong> {form.dataReceivedDate ? formatDate(form.dataReceivedDate) : 'N/A'}</div>
+                            <div><strong>Assigned To:</strong> {form.assignedName || 'N/A'}</div>
+                            <div><strong>ASM Mobile:</strong> {form.asmMobileNumber || 'N/A'}</div>
+                            <div><strong>Admin Date:</strong> {form.adminDate ? formatDate(form.adminDate) : 'N/A'}</div>
+                            <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
+                            <div><strong>Status:</strong> {form.leadStatus || 'N/A'}</div>
+                            <div><strong>Category:</strong> {form.leadCategory || 'N/A'}</div>
+                            <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
+                            <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
+                            <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
+                          </div>
+                        </div>
+                      )}
+
                       {form.status !== 'pending' && form.reviewComment && (
                         <div className="review-section" style={{ marginTop: '1rem' }}>
                           <h4>Review Comment:</h4>

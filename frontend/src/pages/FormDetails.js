@@ -160,6 +160,26 @@ const FormDetails = () => {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                     <div><strong>Amount:</strong> {form.loanAmount ? `₹${form.loanAmount.toLocaleString()}` : 'N/A'}</div>
                                     <div><strong>Property Type:</strong> {form.propertyType || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {/* Admin / Lead Tracking Details - Visible for reference */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                    Lead Tracking & Admin Details
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div><strong>Campaign:</strong> {form.campaign || 'N/A'}</div>
+                                    <div><strong>Vertical:</strong> {form.leadCreatedVertical || 'N/A'}</div>
+                                    <div><strong>Data Date:</strong> {form.dataReceivedDate ? new Date(form.dataReceivedDate).toLocaleDateString() : 'N/A'}</div>
+                                    <div><strong>Assigned To:</strong> {form.assignedName || 'N/A'}</div>
+                                    <div><strong>ASM Mobile:</strong> {form.asmMobileNumber || 'N/A'}</div>
+                                    <div><strong>Admin Date:</strong> {form.adminDate ? new Date(form.adminDate).toLocaleDateString() : 'N/A'}</div>
+                                    <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
+                                    <div><strong>Lead Status:</strong> {form.leadStatus || 'N/A'}</div>
+                                    <div><strong>Lead Category:</strong> {form.leadCategory || 'N/A'}</div>
+                                    <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
+                                    <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
                                     <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
                                 </div>
                             </div>
