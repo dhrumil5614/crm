@@ -82,6 +82,11 @@ const FormDetails = () => {
         fetchRemarks();
     };
 
+    const formatMonth = (date) => {
+        if (!date) return 'N/A';
+        return new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div className="alert alert-error">{error}</div>;
     if (!form) return <div>Form not found</div>;
@@ -97,26 +102,90 @@ const FormDetails = () => {
                     </div>
 
                     <div className="card">
-                        <div className="card-header">
-                            <h3>{form.customerName}</h3>
-                            <span className={`status-badge status-${form.status}`}>
-                                {form.status.toUpperCase()}
-                            </span>
+                        <div className="card-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                <h3 style={{ margin: 0 }}>{form.customerName}</h3>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <span className={`status-badge status-${form.status}`}>
+                                        {form.status.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="card-content">
-                            <p><strong>Mobile:</strong> {form.mobileNumber}</p>
-                            <p><strong>Loan Type:</strong> {form.loanType}</p>
-                            <p><strong>Interested:</strong> {form.interestedStatus}</p>
-                            <p><strong>Agent:</strong> {form.agentName}</p>
-                            <p><strong>Date:</strong> {new Date(form.submissionDate).toLocaleDateString()}</p>
 
-                            <div style={{ marginTop: '1rem' }}>
-                                <button onClick={handleExport} className="btn-primary" style={{ marginRight: '0.5rem' }}>
+                        <div className="card-content">
+                            {/* Product & Source */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                    Product & Source
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div><strong>Month:</strong> {formatMonth(form.month)}</div>
+                                    <div><strong>Product:</strong> {form.product || 'N/A'}</div>
+                                    <div><strong>Main Source:</strong> {form.mainSource || 'N/A'}</div>
+                                    <div><strong>Lead ID:</strong> {form.leadId || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {/* Customer Info */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                    Customer Information
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div><strong>Company:</strong> {form.companyName || 'N/A'}</div>
+                                    <div><strong>Mobile:</strong> {form.mobileNumber || 'N/A'}</div>
+                                    <div><strong>Alt Number:</strong> {form.alternateNumber || 'N/A'}</div>
+                                    <div><strong>Business Type:</strong> {form.businessType || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {/* Location */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                    Location
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div><strong>City:</strong> {form.city || 'N/A'}</div>
+                                    <div><strong>State:</strong> {form.state || 'N/A'}</div>
+                                    <div><strong>Area:</strong> {form.areaName || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {/* Loan Details */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                    Loan Details
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div><strong>Amount:</strong> {form.loanAmount ? `₹${form.loanAmount.toLocaleString()}` : 'N/A'}</div>
+                                    <div><strong>Property Type:</strong> {form.propertyType || 'N/A'}</div>
+                                    <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {/* Agent Remarks */}
+                            {form.agentRemarks && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h4 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#666' }}>
+                                        Agent Remarks
+                                    </h4>
+                                    <p style={{ background: '#f9f9f9', padding: '1rem', borderRadius: '4px' }}>{form.agentRemarks}</p>
+                                </div>
+                            )}
+
+                            {/* Submission Info */}
+                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee', color: '#888', fontSize: '0.9rem' }}>
+                                <p>Submitted by {form.agentName} on {new Date(form.submissionDate).toLocaleString()}</p>
+                            </div>
+
+                            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                <button onClick={handleExport} className="btn-primary">
                                     Export to Excel
                                 </button>
                                 <button
                                     onClick={() => setShowReminderModal(true)}
-                                    style={{ background: '#f39c12', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                    style={{ background: '#f39c12', color: 'white', padding: '0.7rem 1.5rem', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                 >
                                     Set Reminder
                                 </button>
@@ -125,27 +194,33 @@ const FormDetails = () => {
                     </div>
 
                     <div className="card">
-                        <h3>Remarks</h3>
+                        <h3>Remarks History</h3>
 
-                        <div className="filter-section" style={{ margin: '1rem 0', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            <input
-                                type="date"
-                                name="startDate"
-                                value={dateFilter.startDate}
-                                onChange={handleDateFilterChange}
-                            />
-                            <span>to</span>
-                            <input
-                                type="date"
-                                name="endDate"
-                                value={dateFilter.endDate}
-                                onChange={handleDateFilterChange}
-                            />
-                            <button onClick={applyDateFilter}>Filter</button>
-                            <button onClick={() => {
-                                setDateFilter({ startDate: '', endDate: '' });
-                                fetchRemarks(); // Reset filter
-                            }}>Reset</button>
+                        <div className="filter-section" style={{ margin: '1rem 0', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <input
+                                    type="date"
+                                    name="startDate"
+                                    value={dateFilter.startDate}
+                                    onChange={handleDateFilterChange}
+                                    style={{ padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                                />
+                                <span>to</span>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    value={dateFilter.endDate}
+                                    onChange={handleDateFilterChange}
+                                    style={{ padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button onClick={applyDateFilter} className="btn-primary" style={{ padding: '0.5rem 1rem' }}>Filter</button>
+                                <button onClick={() => {
+                                    setDateFilter({ startDate: '', endDate: '' });
+                                    fetchRemarks(); // Reset filter
+                                }} style={{ padding: '0.5rem 1rem', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Reset</button>
+                            </div>
                         </div>
 
                         <div className="remarks-list" style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1rem' }}>
@@ -154,28 +229,28 @@ const FormDetails = () => {
                             ) : (
                                 remarks.map((remark, index) => (
                                     <div key={index} style={{
-                                        padding: '0.5rem',
+                                        padding: '1rem',
                                         borderBottom: '1px solid #eee',
                                         backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white'
                                     }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#666' }}>
-                                            <span>{remark.senderName} ({remark.senderRole})</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>{remark.senderName} ({remark.senderRole})</span>
                                             <span>{new Date(remark.createdAt).toLocaleString()}</span>
                                         </div>
-                                        <p style={{ margin: '0.5rem 0' }}>{remark.message}</p>
+                                        <p style={{ margin: 0, color: '#333' }}>{remark.message}</p>
                                     </div>
                                 ))
                             )}
                         </div>
 
-                        <form onSubmit={handleAddRemark}>
+                        <form onSubmit={handleAddRemark} style={{ marginTop: '1.5rem' }}>
                             <textarea
                                 value={newRemark}
                                 onChange={(e) => setNewRemark(e.target.value)}
-                                placeholder="Add a remark..."
-                                style={{ width: '100%', minHeight: '80px', padding: '0.5rem' }}
+                                placeholder="Add a new remark..."
+                                style={{ width: '100%', minHeight: '100px', padding: '1rem', border: '1px solid #ddd', borderRadius: '4px', resize: 'vertical' }}
                             />
-                            <button type="submit" disabled={!newRemark.trim()} style={{ marginTop: '0.5rem' }}>
+                            <button type="submit" disabled={!newRemark.trim()} className="btn-primary" style={{ marginTop: '1rem' }}>
                                 Add Remark
                             </button>
                         </form>

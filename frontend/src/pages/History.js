@@ -308,10 +308,18 @@ const History = () => {
                   <>
                     <div className="card-content" style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
                       <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Mobile:</strong> {form.mobileNumber || 'N/A'} | <strong>Loan Type:</strong> {form.loanType || 'N/A'}
-                        <span className={`priority-badge priority-${form.interestedStatus?.toLowerCase() === 'yes' ? 'high' : 'low'}`} style={{ marginLeft: '0.5rem' }}>
-                          {form.interestedStatus || 'N/A'}
-                        </span>
+                        <strong>Mobile:</strong> {form.mobileNumber || 'N/A'} | <strong>Product:</strong> {form.product || 'N/A'}
+                        {form.loanAmount > 0 && <span> | <strong>Loan Amount:</strong> ₹{form.loanAmount.toLocaleString()}</span>}
+                      </div>
+                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                        <strong>Company:</strong> {form.companyName || 'N/A'} | <strong>Business Type:</strong> {form.businessType || 'N/A'}
+                      </div>
+                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                        <strong>Lead ID:</strong> {form.leadId || 'N/A'} | <strong>Source:</strong> {form.mainSource || 'N/A'}
+                      </div>
+                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                        <strong>Location:</strong> {form.city || 'N/A'}, {form.state || 'N/A'}
+                        {form.propertyType && <span> | <strong>Status:</strong> {form.propertyType}</span>}
                       </div>
                       <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
                         <strong>Agent:</strong> {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})

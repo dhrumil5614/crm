@@ -171,10 +171,18 @@ const AdminPending = () => {
                   <div>
                     <h3 className="card-title">{form.customerName || 'N/A'}</h3>
                     <div className="card-meta">
-                      Mobile: {form.mobileNumber || 'N/A'} | Loan Type: {form.loanType || 'N/A'}
-                      <span className={`priority-badge priority-${form.interestedStatus?.toLowerCase() === 'yes' ? 'high' : 'low'}`}>
-                        {form.interestedStatus || 'N/A'}
-                      </span>
+                      Mobile: {form.mobileNumber || 'N/A'} | Product: {form.product || 'N/A'}
+                      {form.loanAmount > 0 && <span> | Loan Amount: ₹{form.loanAmount.toLocaleString()}</span>}
+                    </div>
+                    <div className="card-meta">
+                      Company: {form.companyName || 'N/A'} | Business Type: {form.businessType || 'N/A'}
+                    </div>
+                    <div className="card-meta">
+                      Lead ID: {form.leadId || 'N/A'} | Source: {form.mainSource || 'N/A'}
+                    </div>
+                    <div className="card-meta">
+                      Location: {form.city || 'N/A'}, {form.state || 'N/A'}
+                      {form.propertyType && <span> | Status: {form.propertyType}</span>}
                     </div>
                     <div className="card-meta">
                       Agent: {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})
