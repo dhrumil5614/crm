@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true // Default true for now to avoid locking out existing users, new logic will handle it
   },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    select: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -27,11 +27,14 @@ api.interceptors.request.use(
 
 // Auth API
 export const authAPI = {
-  // register: (data) => api.post('/auth/register', data), // Valid for Admin use only now via createUser
   login: (data) => api.post('/auth/login', data),
   verifyOtp: (data) => api.post('/auth/verify-otp', data),
   getMe: () => api.get('/auth/me'),
-  createUser: (data) => api.post('/auth/create-user', data), // Admin only
+  createUser: (data) => api.post('/auth/create-user', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  verifyResetOtp: (data) => api.post('/auth/verify-reset-otp', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 // Forms API

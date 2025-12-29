@@ -12,6 +12,8 @@ import AdminPending from './pages/AdminPending';
 import AdminAllForms from './pages/AdminAllForms';
 import AdminUserManagement from './pages/AdminUserManagement'; // New component
 import FormDetails from './pages/FormDetails';
+import ForgotPassword from './pages/ForgotPassword';
+import ChangePassword from './pages/ChangePassword';
 
 function App() {
   return (
@@ -19,7 +21,17 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* <Route path="/register" element={<Register />} /> */}
+
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/dashboard"

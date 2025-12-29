@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [step, setStep] = useState(1); // 1: Email/Pass, 2: OTP
+  const [step, setStep] = useState(1); // 1: Email/Pass, 2: OTP (admin only)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -32,8 +32,19 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
 
     if (result.success) {
-      setMessage(result.message || 'OTP sent to your email.');
-      setStep(2);
+      // Admin: needs OTP
+      if (result.requiresOtp) {
+        setMessage(result.message || 'OTP sent to your email.');
+        setStep(2);
+      }
+      // User: direct login
+      else {
+        if (result.mustChangePassword) {
+          navigate('/change-password');
+        } else {
+          navigate('/dashboard');
+        }
+      }
     } else {
       setError(result.message);
     }
@@ -49,7 +60,11 @@ const Login = () => {
     const result = await verifyOtp(formData.email, formData.otp);
 
     if (result.success) {
-      navigate('/dashboard');
+      if (result.mustChangePassword) {
+        navigate('/change-password');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.message);
     }
@@ -103,8 +118,12 @@ const Login = () => {
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Sending OTP...' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
+
+            <div className="auth-switch" style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <Link to="/forgot-password">Forgot Password?</Link>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleOtpSubmit}>
