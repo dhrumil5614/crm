@@ -12,7 +12,10 @@ const adminRoutes = require('./routes/admin');
 dotenv.config();
 
 // Connect to database
-connectDB();
+connectDB().then(() => {
+  const seedAdmin = require('./utils/seeder'); // Require here to ensure DB is connected/models loaded
+  seedAdmin();
+});
 
 const app = express();
 

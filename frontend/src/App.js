@@ -4,12 +4,13 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Login from './pages/Login';
-import Register from './pages/Register';
+// import Register from './pages/Register'; // Removed public registration
 import Dashboard from './pages/Dashboard';
 import NewEntry from './pages/NewEntry';
 import History from './pages/History';
 import AdminPending from './pages/AdminPending';
 import AdminAllForms from './pages/AdminAllForms';
+import AdminUserManagement from './pages/AdminUserManagement'; // New component
 import FormDetails from './pages/FormDetails';
 
 function App() {
@@ -18,13 +19,22 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* <Route path="/register" element={<Register />} /> */}
 
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminUserManagement />
               </ProtectedRoute>
             }
           />

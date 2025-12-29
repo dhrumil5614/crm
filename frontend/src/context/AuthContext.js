@@ -34,29 +34,44 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   };
 
+  // Step 1: Login to get OTP
   const login = async (email, password) => {
     try {
       setError(null);
       const response = await authAPI.login({ email, password });
+      // Don't set token here, just return success
+      return { success: true, message: response.data.message };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Login failed';
+      setError(message);
+      // Clean up any partial state if needed
+      return { success: false, message };
+    }
+  };
+
+  // Step 2: Verify OTP to get Token
+  const verifyOtp = async (email, otp) => {
+    try {
+      setError(null);
+      const response = await authAPI.verifyOtp({ email, otp });
       localStorage.setItem('token', response.data.token);
       setUser(response.data.user);
       return { success: true };
     } catch (err) {
-      const message = err.response?.data?.message || 'Login failed';
+      const message = err.response?.data?.message || 'OTP verification failed';
       setError(message);
       return { success: false, message };
     }
   };
 
-  const register = async (name, email, password, role = 'user') => {
+  // Admin only: Create User
+  const createUser = async (userData) => {
     try {
       setError(null);
-      const response = await authAPI.register({ name, email, password, role });
-      localStorage.setItem('token', response.data.token);
-      setUser(response.data.user);
+      await authAPI.createUser(userData);
       return { success: true };
     } catch (err) {
-      const message = err.response?.data?.message || 'Registration failed';
+      const message = err.response?.data?.message || 'User creation failed';
       setError(message);
       return { success: false, message };
     }
@@ -72,7 +87,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
-    register,
+    verifyOtp,
+    createUser,
     logout,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',

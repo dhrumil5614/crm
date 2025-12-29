@@ -147,6 +147,35 @@ const Dashboard = () => {
                 >
                   <span>📂</span> All Forms
                 </button>
+                <button
+                  onClick={() => navigate('/admin/users')}
+                  style={{
+                    padding: '1rem',
+                    fontSize: '1.05rem',
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', // Distinct Green color
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(17, 153, 142, 0.3)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(17, 153, 142, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(17, 153, 142, 0.3)';
+                  }}
+                >
+                  <span>👥</span> Manage Users
+                </button>
               </>
             )}
           </div>
