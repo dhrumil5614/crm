@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  campaign: {
+    type: String,
+    enum: ['New Sales', 'CP sign Up', 'LG Retail'],
+    default: 'New Sales'
+  },
+  permissions: [{
+    type: String
+  }],
   twoFactorCode: {
     type: String,
     select: false

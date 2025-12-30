@@ -14,6 +14,7 @@ import AdminUserManagement from './pages/AdminUserManagement'; // New component
 import FormDetails from './pages/FormDetails';
 import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
+import AdminAuditLogs from './pages/AdminAuditLogs';
 
 function App() {
   return (
@@ -98,6 +99,14 @@ function App() {
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/admin/audit"
+            element={
+              <ProtectedRoute>
+                <AdminAuditLogs />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </Router>

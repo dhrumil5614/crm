@@ -1,27 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const AdminUserManagement = () => {
     const { createUser } = useAuth();
 
-    // Form State
+    // Users List State
+    const [users, setUsers] = useState([]);
+
+    // Form State (Create)
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        role: 'user'
+        role: 'user',
+        campaign: 'New Sales'
+    });
+
+    // Edit State
+    const [editingUser, setEditingUser] = useState(null);
+    const [editFormData, setEditFormData] = useState({
+        role: 'user',
+        campaign: 'New Sales'
     });
 
     // UI State
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get('http://localhost:5001/api/admin/users', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsers(res.data.users);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleEditChange = (e) => {
+        setEditFormData({
+            ...editFormData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const startEdit = (user) => {
+        setEditingUser(user);
+        setEditFormData({
+            role: user.role,
+            campaign: user.campaign || 'New Sales'
+        });
+        // Clear create form messages
+        setMessage({ type: '', text: '' });
+    };
+
+    const cancelEdit = () => {
+        setEditingUser(null);
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`http://localhost:5001/api/admin/users/${editingUser._id}`, editFormData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMessage({ type: 'success', text: 'User updated successfully' });
+            setEditingUser(null);
+            fetchUsers();
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.message || 'Update failed' });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -43,8 +107,10 @@ const AdminUserManagement = () => {
                 name: '',
                 email: '',
                 password: '',
-                role: 'user'
+                role: 'user',
+                campaign: 'New Sales'
             });
+            fetchUsers();
         } else {
             setMessage({ type: 'error', text: result.message });
         }
@@ -55,7 +121,8 @@ const AdminUserManagement = () => {
         <>
             <Navbar />
             <div className="container">
-                <div className="card" style={{ maxWidth: '600px', margin: '2rem auto' }}>
+                {/* Create User Card */}
+                <div className="card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
                     <div className="card-header">
                         <h2 className="card-title">Create New User</h2>
                     </div>
@@ -67,7 +134,7 @@ const AdminUserManagement = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label>Full Name</label>
                                 <input
@@ -110,16 +177,24 @@ const AdminUserManagement = () => {
                                     name="role"
                                     value={formData.role}
                                     onChange={handleChange}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ddd',
-                                        fontSize: '1rem'
-                                    }}
+                                    className="form-control"
                                 >
                                     <option value="user">Standard User</option>
                                     <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label>Campaign</label>
+                                <select
+                                    name="campaign"
+                                    value={formData.campaign || 'New Sales'}
+                                    onChange={handleChange}
+                                    className="form-control"
+                                >
+                                    <option value="New Sales">New Sales (Default)</option>
+                                    <option value="CP sign Up">CP Sign Up</option>
+                                    <option value="LG Retail">LG Retail</option>
                                 </select>
                             </div>
 
@@ -127,13 +202,99 @@ const AdminUserManagement = () => {
                                 type="submit"
                                 className="btn btn-primary"
                                 disabled={loading}
-                                style={{ width: '100%', marginTop: '1rem' }}
+                                style={{ gridColumn: 'span 2' }}
                             >
                                 {loading ? 'Creating...' : 'Create User'}
                             </button>
                         </form>
                     </div>
                 </div>
+
+                {/* Users List Card */}
+                <div className="card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
+                    <div className="card-header">
+                        <h2 className="card-title">Manage Users ({users.length})</h2>
+                    </div>
+                    <div className="table-responsive">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Campaign</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map(user => (
+                                    <tr key={user._id}>
+                                        <td>{user.name}</td>
+                                        <td>{user.email}</td>
+                                        <td>
+                                            <span className={`badge ${user.role === 'admin' ? 'badge-primary' : 'badge-secondary'}`}>
+                                                {user.role}
+                                            </span>
+                                        </td>
+                                        <td>{user.campaign || '-'}</td>
+                                        <td>
+                                            <button
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => startEdit(user)}
+                                            >
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Edit User Modal */}
+                {editingUser && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 1000
+                    }}>
+                        <div className="card" style={{ width: '400px', padding: '1rem' }}>
+                            <h3>Edit {editingUser.name}</h3>
+                            <form onSubmit={handleUpdateUser}>
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <select
+                                        name="role"
+                                        value={editFormData.role}
+                                        onChange={handleEditChange}
+                                        className="form-control"
+                                    >
+                                        <option value="user">Standard User</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Campaign</label>
+                                    <select
+                                        name="campaign"
+                                        value={editFormData.campaign}
+                                        onChange={handleEditChange}
+                                        className="form-control"
+                                    >
+                                        <option value="New Sales">New Sales</option>
+                                        <option value="CP sign Up">CP Sign Up</option>
+                                        <option value="LG Retail">LG Retail</option>
+                                    </select>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                    <button type="submit" className="btn btn-primary">Update</button>
+                                    <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

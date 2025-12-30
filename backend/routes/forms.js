@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Form = require('../models/Form');
 const { protect } = require('../middleware/auth');
+const { audit } = require('../middleware/auditLogger'); // Import audit middleware
 const ExcelJS = require('exceljs');
 
 // @route   POST /api/forms
@@ -11,6 +12,7 @@ const ExcelJS = require('exceljs');
 router.post(
   '/',
   protect,
+  audit('CREATE_LEAD', 'Form'), // Audit Log
   [
     body('mobileNumber').trim().notEmpty().withMessage('Mobile number is required'),
     body('customerName').trim().notEmpty().withMessage('Customer name is required'),
@@ -395,7 +397,7 @@ router.delete('/:id', protect, async (req, res) => {
 // @route   POST /api/forms/:id/remarks
 // @desc    Add a remark to a form
 // @access  Private
-router.post('/:id/remarks', protect, async (req, res) => {
+router.post('/:id/remarks', protect, audit('ADD_REMARK', 'Form'), async (req, res) => {
   try {
     const { message } = req.body;
     if (!message) {
@@ -726,7 +728,7 @@ router.post('/:id/reminder', [
 // @route   PUT /api/forms/:id
 // @desc    Update form details (Admin only or specific fields)
 // @access  Private
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, audit('UPDATE_LEAD', 'Form'), async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
 

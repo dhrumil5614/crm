@@ -8,6 +8,41 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 router.use(authorize('admin'));
 
+// @route   GET /api/admin/users
+// @desc    Get all users
+// @access  Private/Admin
+router.get('/users', async (req, res) => {
+  try {
+    const users = await require('../models/User').find().select('-password').sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: users.length, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @route   PUT /api/admin/users/:id
+// @desc    Update user (role, campaign, etc)
+// @access  Private/Admin
+router.put('/users/:id', async (req, res) => {
+  try {
+    const { role, campaign } = req.body;
+    const user = await require('../models/User').findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (role) user.role = role;
+    if (campaign) user.campaign = campaign;
+
+    await user.save();
+
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
 // @route   GET /api/admin/forms
 // @desc    Get all forms (for admin)
 // @access  Private/Admin

@@ -7,6 +7,10 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/forms');
 const adminRoutes = require('./routes/admin');
+const auditRoutes = require('./routes/audit'); // Import Audit Routes
+const leadRoutes = require('./routes/leads'); // Import Lead Routes
+const accountRoutes = require('./routes/accounts');
+const opportunityRoutes = require('./routes/opportunities');
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/forms', formRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/audit', auditRoutes); // Mount Audit Routes
+app.use('/api/leads', leadRoutes); // Mount Lead Routes
+app.use('/api/accounts', accountRoutes);
+app.use('/api/opportunities', opportunityRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

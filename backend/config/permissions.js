@@ -1,0 +1,24 @@
+const Permissions = {
+    // User Management
+    USER_READ: 'USER_READ',
+    USER_CREATE: 'USER_CREATE',
+    USER_UPDATE: 'USER_UPDATE',
+    USER_DELETE: 'USER_DELETE',
+
+    // Lead/Form Management
+    LEAD_READ_ALL: 'LEAD_READ_ALL',
+    LEAD_READ_OWN: 'LEAD_READ_OWN',
+    LEAD_CREATE: 'LEAD_CREATE',
+    LEAD_UPDATE_ALL: 'LEAD_UPDATE_ALL',
+    LEAD_UPDATE_OWN: 'LEAD_UPDATE_OWN',
+    LEAD_DELETE_ALL: 'LEAD_DELETE_ALL',
+    LEAD_DELETE_OWN: 'LEAD_DELETE_OWN',
+    LEAD_EXPORT: 'LEAD_EXPORT',
+
+    // System
+    AUDIT_VIEW: 'AUDIT_VIEW',
+    LOGS_VIEW: 'LOGS_VIEW',
+    SETTINGS_MANAGE: 'SETTINGS_MANAGE'
+};
+
+module.exports = Permissions;

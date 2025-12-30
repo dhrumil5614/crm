@@ -5,6 +5,10 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken, protect } = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
+const { logAudit } = require('../middleware/auditLogger'); // Import Audit Logger
+
+// Helper to get IP
+const getIp = (req) => req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
 // @route   POST /api/auth/login
 // @desc    Role-based login (Admin: 2FA OTP, User: Direct)
@@ -27,12 +31,29 @@ router.post(
       // Check if user exists (include password field)
       const user = await User.findOne({ email }).select('+password');
       if (!user) {
+        await logAudit({
+          action: 'LOGIN_FAILED',
+          resource: 'Auth',
+          details: { reason: 'User not found', email },
+          ip: getIp(req),
+          userAgent: req.headers['user-agent'],
+          status: 'FAILURE'
+        });
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
       // Check password
       const isPasswordCorrect = await user.comparePassword(password);
       if (!isPasswordCorrect) {
+        await logAudit({
+          user: user._id,
+          action: 'LOGIN_FAILED',
+          resource: 'Auth',
+          details: { reason: 'Invalid password' },
+          ip: getIp(req),
+          userAgent: req.headers['user-agent'],
+          status: 'FAILURE'
+        });
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
@@ -88,6 +109,15 @@ router.post(
       else {
         const token = generateToken(user._id);
 
+        await logAudit({
+          user: user._id,
+          action: 'LOGIN_SUCCESS',
+          resource: 'Auth',
+          details: { role: 'user', method: 'Direct' },
+          ip: getIp(req),
+          userAgent: req.headers['user-agent']
+        });
+
         res.status(200).json({
           success: true,
           token,
@@ -96,6 +126,7 @@ router.post(
             name: user.name,
             email: user.email,
             role: user.role,
+            campaign: user.campaign,
             mustChangePassword: user.mustChangePassword
           },
           requiresOtp: false
@@ -153,6 +184,15 @@ router.post(
 
       const token = generateToken(user._id);
 
+      await logAudit({
+        user: user._id,
+        action: 'LOGIN_SUCCESS',
+        resource: 'Auth',
+        details: { role: 'admin', method: '2FA' },
+        ip: getIp(req),
+        userAgent: req.headers['user-agent']
+      });
+
       res.status(200).json({
         success: true,
         token,
@@ -161,6 +201,7 @@ router.post(
           name: user.name,
           email: user.email,
           role: user.role,
+          campaign: user.campaign,
           mustChangePassword: user.mustChangePassword
         }
       });
@@ -436,7 +477,8 @@ router.post(
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('role').isIn(['user', 'admin']).withMessage('Role must be user or admin')
+    body('role').isIn(['user', 'admin']).withMessage('Role must be user or admin'),
+    body('campaign').optional().isIn(['New Sales', 'CP sign Up', 'LG Retail']).withMessage('Invalid campaign type')
   ],
   async (req, res) => {
     if (req.user.role !== 'admin') {
@@ -449,7 +491,7 @@ router.post(
     }
 
     try {
-      const { name, email, password, role } = req.body;
+      const { name, email, password, role, campaign } = req.body;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -461,6 +503,7 @@ router.post(
         email,
         password,
         role,
+        campaign: campaign || 'New Sales', // Default if not provided
         isEmailVerified: true,
         mustChangePassword: true // Force password change on first login
       });
@@ -507,6 +550,7 @@ router.get('/me', protect, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        campaign: user.campaign,
         mustChangePassword: user.mustChangePassword
       }
     });
