@@ -15,6 +15,16 @@ const FormDetails = () => {
     const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
     const [showReminderModal, setShowReminderModal] = useState(false);
 
+    // Editable fields state
+    const [formData, setFormData] = useState({
+        propertyType: '',
+        leadStatus: '',
+        leadCategory: '',
+        asmStatus: ''
+    });
+    const [isEditing, setIsEditing] = useState(false);
+    const [updateLoading, setUpdateLoading] = useState(false);
+
     useEffect(() => {
         fetchFormDetails();
         fetchRemarks();
@@ -24,6 +34,13 @@ const FormDetails = () => {
         try {
             const response = await formsAPI.getById(id);
             setForm(response.data.form);
+            // Initialize editable fields
+            setFormData({
+                propertyType: response.data.form.propertyType || '',
+                leadStatus: response.data.form.leadStatus || '',
+                leadCategory: response.data.form.leadCategory || '',
+                asmStatus: response.data.form.asmStatus || ''
+            });
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to fetch form details');
         } finally {
@@ -82,14 +99,75 @@ const FormDetails = () => {
         fetchRemarks();
     };
 
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        setIsEditing(true);
+    };
+
+    const handleUpdate = async () => {
+        try {
+            setUpdateLoading(true);
+            const updatePayload = {
+                propertyType: formData.propertyType,
+                leadStatus: formData.leadStatus,
+                leadCategory: formData.leadCategory,
+                asmStatus: formData.asmStatus
+            };
+
+            await formsAPI.updateForm(id, updatePayload);
+            setIsEditing(false);
+            alert('Form updated successfully!');
+            fetchFormDetails(); // Refresh data
+        } catch (error) {
+            console.error('Failed to update form:', error);
+            alert('Failed to update form. Please try again.');
+        } finally {
+            setUpdateLoading(false);
+        }
+    };
+
     const formatMonth = (date) => {
         if (!date) return 'N/A';
         return new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     };
 
+    // Dropdown options
+    const propertyTypeOptions = [
+        'already Sanctioned / Disbursed',
+        'ASM Visit Done- Documents Pending',
+        'Case Disbursed',
+        'Case Logged In',
+        'Case Rejected - Credit Manager',
+        'Case Sanctioned',
+        'Competitor offer taken',
+        'Customer Not Contactable',
+        'Customer Put on Hold Post Login',
+        'Follow Ups',
+        'High Charges',
+        'Low Turn Over',
+        'Machine not Finalised',
+        'Meeting Fixed',
+        'No Revert from ASM',
+        'Not Doable',
+        'Not Interested',
+        'On Hold-Post Sanction',
+        'Will take in future'
+    ];
+
+    const leadStatuses = ['Closed', 'follow up', 'open', 'Win'];
+    const leadCategories = ['closed', 'follow up', 'Win'];
+    const asmStatuses = propertyTypeOptions;
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div className="alert alert-error">{error}</div>;
     if (!form) return <div>Form not found</div>;
+
+    // Check if form can be edited (approved or rejected)
+    const canEdit = form.status === 'approved' || form.status === 'rejected';
 
     return (
         <>
@@ -98,7 +176,26 @@ const FormDetails = () => {
                 <div className="dashboard">
                     <div className="dashboard-header">
                         <h2>Form Details</h2>
-                        <button onClick={() => navigate(-1)}>Back</button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {canEdit && isEditing && (
+                                <button
+                                    onClick={handleUpdate}
+                                    disabled={updateLoading}
+                                    style={{
+                                        background: '#2ecc71',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '5px',
+                                        cursor: updateLoading ? 'not-allowed' : 'pointer',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {updateLoading ? 'Saving...' : '💾 Save Changes'}
+                                </button>
+                            )}
+                            <button onClick={() => navigate(-1)}>Back</button>
+                        </div>
                     </div>
 
                     <div className="card">
@@ -159,7 +256,32 @@ const FormDetails = () => {
                                 </h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                     <div><strong>Amount:</strong> {form.loanAmount ? `₹${form.loanAmount.toLocaleString()}` : 'N/A'}</div>
-                                    <div><strong>Property Type:</strong> {form.propertyType || 'N/A'}</div>
+                                    <div>
+                                        <strong>Property Type:</strong>
+                                        {canEdit ? (
+                                            <select
+                                                name="propertyType"
+                                                value={formData.propertyType}
+                                                onChange={handleInputChange}
+                                                style={{
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    padding: '0.5rem',
+                                                    marginTop: '0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: '2px solid #3498db',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                            >
+                                                <option value="">Select Property Type</option>
+                                                {propertyTypeOptions.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.propertyType || 'N/A'}</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -176,9 +298,84 @@ const FormDetails = () => {
                                     <div><strong>ASM Mobile:</strong> {form.asmMobileNumber || 'N/A'}</div>
                                     <div><strong>Admin Date:</strong> {form.adminDate ? new Date(form.adminDate).toLocaleDateString() : 'N/A'}</div>
                                     <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
-                                    <div><strong>Lead Status:</strong> {form.leadStatus || 'N/A'}</div>
-                                    <div><strong>Lead Category:</strong> {form.leadCategory || 'N/A'}</div>
-                                    <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
+                                    <div>
+                                        <strong>Lead Status:</strong>
+                                        {canEdit ? (
+                                            <select
+                                                name="leadStatus"
+                                                value={formData.leadStatus}
+                                                onChange={handleInputChange}
+                                                style={{
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    padding: '0.5rem',
+                                                    marginTop: '0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: '2px solid #3498db',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                            >
+                                                <option value="">Select Lead Status</option>
+                                                {leadStatuses.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.leadStatus || 'N/A'}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <strong>Lead Category:</strong>
+                                        {canEdit ? (
+                                            <select
+                                                name="leadCategory"
+                                                value={formData.leadCategory}
+                                                onChange={handleInputChange}
+                                                style={{
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    padding: '0.5rem',
+                                                    marginTop: '0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: '2px solid #3498db',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                            >
+                                                <option value="">Select Lead Category</option>
+                                                {leadCategories.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.leadCategory || 'N/A'}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <strong>ASM Status:</strong>
+                                        {canEdit ? (
+                                            <select
+                                                name="asmStatus"
+                                                value={formData.asmStatus}
+                                                onChange={handleInputChange}
+                                                style={{
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    padding: '0.5rem',
+                                                    marginTop: '0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: '2px solid #3498db',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                            >
+                                                <option value="">Select ASM Status</option>
+                                                {asmStatuses.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.asmStatus || 'N/A'}</span>
+                                        )}
+                                    </div>
                                     <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
                                     <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
                                 </div>
