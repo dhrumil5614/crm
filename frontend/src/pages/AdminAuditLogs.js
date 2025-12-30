@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import axios from 'axios';
+import { adminAPI } from '../services/api';
 
 const AdminAuditLogs = () => {
     const [logs, setLogs] = useState([]);
@@ -26,21 +26,13 @@ const AdminAuditLogs = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                params: {
-                    page,
-                    limit: 20,
-                    action: actionFilter,
-                    resource: resourceFilter
-                }
-            };
-
             // In real app, use the API service wrapper
-            const response = await axios.get('http://localhost:5001/api/audit', config);
+            const response = await adminAPI.getAuditLogs({
+                page,
+                limit: 20,
+                action: actionFilter,
+                resource: resourceFilter
+            });
 
             setLogs(response.data.data);
             setTotalPages(response.data.totalPages);
@@ -135,8 +127,8 @@ const AdminAuditLogs = () => {
                                             <td>{new Date(log.timestamp).toLocaleString()}</td>
                                             <td>
                                                 <span className={`badge ${log.action.includes('DELETE') ? 'badge-danger' :
-                                                        log.action.includes('FAILED') ? 'badge-danger' :
-                                                            'badge-primary'
+                                                    log.action.includes('FAILED') ? 'badge-danger' :
+                                                        'badge-primary'
                                                     }`}>
                                                     {log.action}
                                                 </span>

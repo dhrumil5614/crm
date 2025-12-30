@@ -241,21 +241,21 @@ const AdminPending = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
 
-                      {/* Campaign */}
+                      {/* Lead Created Vertical */}
                       <div className="form-group">
-                        <label>Campaign</label>
+                        <label>Lead Created Vertical</label>
                         <select
                           value={supervisorData[form._id]?.campaign || ''}
                           onChange={(e) => handleDataChange(form._id, 'campaign', e.target.value)}
                           style={{ width: '100%', padding: '0.5rem' }}
                         >
-                          <option value="">Select Campaign</option>
+                          <option value="">Select Lead Created Vertical</option>
                           {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
 
                       {/* Lead Created Vertical */}
-                      <div className="form-group">
+                      {/* <div className="form-group">
                         <label>Lead Created Vertical</label>
                         <input
                           type="text"
@@ -263,7 +263,7 @@ const AdminPending = () => {
                           onChange={(e) => handleDataChange(form._id, 'leadCreatedVertical', e.target.value)}
                           style={{ width: '100%', padding: '0.5rem' }}
                         />
-                      </div>
+                      </div> */}
 
                       {/* Data Received Date */}
                       <div className="form-group">
