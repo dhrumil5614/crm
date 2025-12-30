@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { adminAPI } from '../services/api';
 
 const AdminUserManagement = () => {
     const { createUser } = useAuth();
@@ -35,10 +35,7 @@ const AdminUserManagement = () => {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5001/api/admin/users', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await adminAPI.getUsers();
             setUsers(res.data.users);
         } catch (err) {
             console.error(err);
@@ -76,10 +73,7 @@ const AdminUserManagement = () => {
     const handleUpdateUser = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5001/api/admin/users/${editingUser._id}`, editFormData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await adminAPI.updateUser(editingUser._id, editFormData);
             setMessage({ type: 'success', text: 'User updated successfully' });
             setEditingUser(null);
             fetchUsers();

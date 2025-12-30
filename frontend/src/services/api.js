@@ -71,6 +71,8 @@ export const adminAPI = {
     });
   },
   setReminder: (id, data) => api.post(`/admin/forms/${id}/reminder`, data), // Changed to POST
+  getUsers: () => api.get('/admin/users'),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
 };
 
 export default api;
