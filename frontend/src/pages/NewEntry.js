@@ -97,27 +97,7 @@ const NewEntry = () => {
   };
 
   // Property Type options
-  const propertyTypeOptions = [
-    'already Sanctioned / Disbursed',
-    'ASM Visit Done- Documents Pending',
-    'Case Disbursed',
-    'Case Logged In',
-    'Case Rejected - Credit Manager',
-    'Case Sanctioned',
-    'Competitor offer taken',
-    'Customer Not Contactable',
-    'Customer Put on Hold Post Login',
-    'Follow Ups',
-    'High Charges',
-    'Low Turn Over',
-    'Machine not Finalised',
-    'Meeting Fixed',
-    'No Revert from ASM',
-    'Not Doable',
-    'Not Interested',
-    'On Hold-Post Sanction',
-    'Will take in future'
-  ];
+  const propertyTypeOptions = ['Own', 'Rented'];
 
   return (
     <>

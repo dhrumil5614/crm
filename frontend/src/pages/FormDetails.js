@@ -19,7 +19,7 @@ const FormDetails = () => {
     const [formData, setFormData] = useState({
         propertyType: '',
         leadStatus: '',
-        leadCategory: '',
+        // leadCategory: '',
         asmStatus: ''
     });
     const [isEditing, setIsEditing] = useState(false);
@@ -38,7 +38,7 @@ const FormDetails = () => {
             setFormData({
                 propertyType: response.data.form.propertyType || '',
                 leadStatus: response.data.form.leadStatus || '',
-                leadCategory: response.data.form.leadCategory || '',
+                // leadCategory: response.data.form.leadCategory || '',
                 asmStatus: response.data.form.asmStatus || ''
             });
         } catch (err) {
@@ -114,7 +114,7 @@ const FormDetails = () => {
             const updatePayload = {
                 propertyType: formData.propertyType,
                 leadStatus: formData.leadStatus,
-                leadCategory: formData.leadCategory,
+                // leadCategory: formData.leadCategory,
                 asmStatus: formData.asmStatus
             };
 
@@ -136,30 +136,10 @@ const FormDetails = () => {
     };
 
     // Dropdown options
-    const propertyTypeOptions = [
-        'already Sanctioned / Disbursed',
-        'ASM Visit Done- Documents Pending',
-        'Case Disbursed',
-        'Case Logged In',
-        'Case Rejected - Credit Manager',
-        'Case Sanctioned',
-        'Competitor offer taken',
-        'Customer Not Contactable',
-        'Customer Put on Hold Post Login',
-        'Follow Ups',
-        'High Charges',
-        'Low Turn Over',
-        'Machine not Finalised',
-        'Meeting Fixed',
-        'No Revert from ASM',
-        'Not Doable',
-        'Not Interested',
-        'On Hold-Post Sanction',
-        'Will take in future'
-    ];
+    const propertyTypeOptions = ['Own', 'Rented'];
 
     const leadStatuses = ['Closed', 'follow up', 'open', 'Win'];
-    const leadCategories = ['closed', 'follow up', 'Win'];
+    // const leadCategories = ['closed', 'follow up', 'Win'];
     const asmStatuses = propertyTypeOptions;
 
     if (loading) return <div>Loading...</div>;
@@ -324,7 +304,7 @@ const FormDetails = () => {
                                             <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.leadStatus || 'N/A'}</span>
                                         )}
                                     </div>
-                                    <div>
+                                    {/* <div>
                                         <strong>Lead Category:</strong>
                                         {canEdit ? (
                                             <select
@@ -349,7 +329,7 @@ const FormDetails = () => {
                                         ) : (
                                             <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.leadCategory || 'N/A'}</span>
                                         )}
-                                    </div>
+                                    </div> */}
                                     <div>
                                         <strong>ASM Status:</strong>
                                         {canEdit ? (

@@ -566,7 +566,7 @@ router.get('/:id/export', protect, async (req, res) => {
       { field: 'Date (Admin)', value: form.adminDate ? new Date(form.adminDate).toLocaleDateString() : '' },
       { field: 'Best Dispo', value: form.bestDispo },
       { field: 'Lead Status', value: form.leadStatus },
-      { field: 'Lead Category', value: form.leadCategory },
+      // { field: 'Lead Category', value: form.leadCategory },
       { field: 'ASM Status', value: form.asmStatus },
       { field: 'ASM Remark', value: form.asmRemark }
     ]);
@@ -751,7 +751,7 @@ router.put('/:id', protect, audit('UPDATE_LEAD', 'Form'), async (req, res) => {
 
     const fieldsToUpdate = [
       'campaign', 'leadCreatedVertical', 'dataReceivedDate', 'assignedName',
-      'asmMobileNumber', 'adminDate', 'bestDispo', 'leadStatus', 'leadCategory',
+      'asmMobileNumber', 'adminDate', 'bestDispo', 'leadStatus', // 'leadCategory',
       'asmStatus', 'asmRemark', 'inFutureMonth', 'product', 'companyName',
       'customerName', 'mobileNumber', 'city', 'state', 'loanAmount', 'businessType',
       'propertyType', 'mainSource', 'leadId'

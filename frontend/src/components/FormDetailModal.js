@@ -14,7 +14,7 @@ const FormDetailModal = ({ form, onClose, onUpdate }) => {
       setFormData({
         propertyType: form.propertyType || '',
         leadStatus: form.leadStatus || '',
-        leadCategory: form.leadCategory || '',
+        // leadCategory: form.leadCategory || '',
         asmStatus: form.asmStatus || '',
         // Keep other fields for display/completeness if needed in update
         ...form
@@ -57,7 +57,7 @@ const FormDetailModal = ({ form, onClose, onUpdate }) => {
       const updatePayload = {
         propertyType: formData.propertyType,
         leadStatus: formData.leadStatus,
-        leadCategory: formData.leadCategory,
+        // leadCategory: formData.leadCategory,
         asmStatus: formData.asmStatus
       };
 
@@ -77,27 +77,7 @@ const FormDetailModal = ({ form, onClose, onUpdate }) => {
   };
 
   // Dropdown Options
-  const propertyTypeOptions = [
-    'already Sanctioned / Disbursed',
-    'ASM Visit Done- Documents Pending',
-    'Case Disbursed',
-    'Case Logged In',
-    'Case Rejected - Credit Manager',
-    'Case Sanctioned',
-    'Competitor offer taken',
-    'Customer Not Contactable',
-    'Customer Put on Hold Post Login',
-    'Follow Ups',
-    'High Charges',
-    'Low Turn Over',
-    'Machine not Finalised',
-    'Meeting Fixed',
-    'No Revert from ASM',
-    'Not Doable',
-    'Not Interested',
-    'On Hold-Post Sanction',
-    'Will take in future'
-  ];
+  const propertyTypeOptions = ['Own', 'Rented'];
 
   const leadStatuses = ['Closed', 'follow up', 'open', 'Win'];
   const leadCategories = ['closed', 'follow up', 'Win'];

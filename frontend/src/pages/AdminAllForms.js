@@ -503,7 +503,7 @@ const AdminAllForms = () => {
                             <div><strong>Admin Date:</strong> {form.adminDate ? formatDate(form.adminDate) : 'N/A'}</div>
                             <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
                             <div><strong>Status:</strong> {form.leadStatus || 'N/A'}</div>
-                            <div><strong>Category:</strong> {form.leadCategory || 'N/A'}</div>
+                            {/* <div><strong>Category:</strong> {form.leadCategory || 'N/A'}</div> */}
                             <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
                             <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
                             <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>

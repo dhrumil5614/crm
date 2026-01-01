@@ -68,7 +68,7 @@ const AdminPending = () => {
           adminDate: form.adminDate ? new Date(form.adminDate).toISOString().split('T')[0] : '',
           bestDispo: form.bestDispo || 'Lead Generated',
           leadStatus: form.leadStatus || '',
-          leadCategory: form.leadCategory || '',
+          // leadCategory: form.leadCategory || '',
           asmStatus: form.asmStatus || '',
           asmRemark: form.asmRemark || '',
           inFutureMonth: form.inFutureMonth || '',
@@ -337,7 +337,7 @@ const AdminPending = () => {
                       </div>
 
                       {/* Category */}
-                      <div className="form-group">
+                      {/* <div className="form-group">
                         <label>Category</label>
                         <select
                           value={supervisorData[form._id]?.leadCategory || ''}
@@ -347,7 +347,7 @@ const AdminPending = () => {
                           <option value="">Select Category</option>
                           {leadCategories.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
-                      </div>
+                      </div> */}
 
                       {/* ASM Status */}
                       <div className="form-group">
