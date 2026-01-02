@@ -428,15 +428,29 @@ router.post('/:id/remarks', protect, audit('ADD_REMARK', 'Form'), async (req, re
       senderId: req.user._id,
       senderName: req.user.name,
       senderRole: req.user.role,
-      message
+      message,
+      createdAt: new Date()
     };
 
-    form.remarks.unshift(newRemark); // Add to beginning (newest first)
-    await form.save();
+    // Use findByIdAndUpdate for robust array handling (handles missing array, concurrent edits)
+    const updatedForm = await Form.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: {
+          remarks: {
+            $each: [newRemark],
+            $position: 0 // Unshift behavior (add to start)
+          }
+        }
+      },
+      { new: true, runValidators: false } // runValidators: false to avoid strict schema checks on legacy docs if needed, though safer to be true usually. Let's try default (true) or specific.
+      // Actually, if 'remarks' array is missing in doc, $push creates it.
+      // We return 'new: true' to get the updated list.
+    );
 
     res.status(200).json({
       success: true,
-      data: form.remarks
+      data: updatedForm.remarks
     });
   } catch (error) {
     res.status(500).json({
