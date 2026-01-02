@@ -19,7 +19,27 @@ const AdminPending = () => {
   const campaigns = ['CEF', 'EEF', 'One Loan', 'REF', 'SBF', 'UBL'];
   const leadStatuses = ['Closed', 'follow up', 'open', 'Win'];
   const leadCategories = ['closed', 'follow up', 'Win'];
-  const asmStatuses = ['Own', 'Rented'];
+  const asmStatuses = [
+    'Case Disbursed',
+    'Not Doable',
+    'Not Interested',
+    'already Sanctioned / Disbursed',
+    'Will take in future',
+    'Customer Not Contactable',
+    'Case Sanctioned',
+    'Case Logged In',
+    'Meeting Fixed',
+    'On Hold-Post Sanction',
+    'Follow Ups',
+    'High Charges',
+    'Machine not Finalised',
+    'Competitor offer taken',
+    'Customer Put on Hold Post Login',
+    'Low Turn Over',
+    'Case Rejected - Credit Manager',
+    'ASM Visit Done- Documents Pending',
+    'No Revert from ASM'
+  ];
 
   // Generate Future Months Logic
   const generateMonthOptions = () => {
