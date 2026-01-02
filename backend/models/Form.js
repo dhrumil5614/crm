@@ -203,28 +203,7 @@ const formSchema = new mongoose.Schema({
   // },
   asmStatus: { // "ASM - Status" in admin view
     type: String,
-    enum: [
-      'already Sanctioned / Disbursed',
-      'ASM Visit Done- Documents Pending',
-      'Case Disbursed',
-      'Case Logged In',
-      'Case Rejected - Credit Manager',
-      'Case Sanctioned',
-      'Competitor offer taken',
-      'Customer Not Contactable',
-      'Customer Put on Hold Post Login',
-      'Follow Ups',
-      'High Charges',
-      'Low Turn Over',
-      'Machine not Finalised',
-      'Meeting Fixed',
-      'No Revert from ASM',
-      'Not Doable',
-      'Not Interested',
-      'On Hold-Post Sanction',
-      'Will take in future',
-      ''
-    ],
+    enum: ['Own', 'Rented', ''],
     default: ''
   },
   asmRemark: {

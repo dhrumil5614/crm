@@ -140,7 +140,7 @@ const FormDetails = () => {
 
     const leadStatuses = ['Closed', 'follow up', 'open', 'Win'];
     // const leadCategories = ['closed', 'follow up', 'Win'];
-    const asmStatuses = propertyTypeOptions;
+    const asmStatuses = ['Own', 'Rented'];
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div className="alert alert-error">{error}</div>;

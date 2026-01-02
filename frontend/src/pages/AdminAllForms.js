@@ -20,6 +20,7 @@ const AdminAllForms = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [dateRangeError, setDateRangeError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navigate = useNavigate();
 
@@ -179,6 +180,24 @@ const AdminAllForms = () => {
             </div>
           </div>
 
+          {/* Search Bar */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <input
+              type="text"
+              placeholder="Search by Customer Name, Mobile, Lead ID, or ASM Mobile..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                fontSize: '1rem',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}
+            />
+          </div>
+
           {/* Date Range Export Section */}
           <div style={{
             background: 'white',
@@ -315,231 +334,242 @@ const AdminAllForms = () => {
               <p>No forms match the selected filter.</p>
             </div>
           ) : (
-            forms.map((form) => (
-              <div key={form._id} className="card">
-                {/* Collapsed Header - Always Visible */}
-                <div
-                  className="card-header"
-                  style={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                  onClick={() => toggleExpand(form._id)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                    {/* Dropdown Arrow */}
-                    <span style={{ fontSize: '1.2rem', transition: 'transform 0.3s', transform: expandedForms[form._id] ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                      ▶
-                    </span>
-                    <h3 className="card-title" style={{ margin: 0 }}>
-                      {form.customerName || 'N/A'}
-                    </h3>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
-                    {/* Reminder Badges - Beautiful design on the right */}
-                    {(() => {
-                      // Get all active reminders
-                      const activeReminders = [];
+            forms
+              .filter(form => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  (form.customerName && form.customerName.toLowerCase().includes(query)) ||
+                  (form.mobileNumber && form.mobileNumber.toLowerCase().includes(query)) ||
+                  (form.leadId && form.leadId.toLowerCase().includes(query)) ||
+                  (form.asmMobileNumber && form.asmMobileNumber.toLowerCase().includes(query))
+                );
+              })
+              .map((form) => (
+                <div key={form._id} className="card">
+                  {/* Collapsed Header - Always Visible */}
+                  <div
+                    className="card-header"
+                    style={{
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => toggleExpand(form._id)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                      {/* Dropdown Arrow */}
+                      <span style={{ fontSize: '1.2rem', transition: 'transform 0.3s', transform: expandedForms[form._id] ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                        ▶
+                      </span>
+                      <h3 className="card-title" style={{ margin: 0 }}>
+                        {form.customerName || 'N/A'}
+                      </h3>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                      {/* Reminder Badges - Beautiful design on the right */}
+                      {(() => {
+                        // Get all active reminders
+                        const activeReminders = [];
 
-                      // Check new reminders array
-                      if (form.reminders && form.reminders.length > 0) {
-                        form.reminders.forEach(r => {
-                          if (!r.isCompleted) activeReminders.push(r);
-                        });
-                      }
-                      // Check legacy reminder
-                      else if (form.reminder?.isSet && !form.reminder?.isCompleted) {
-                        activeReminders.push({ ...form.reminder, isLegacy: true });
-                      }
+                        // Check new reminders array
+                        if (form.reminders && form.reminders.length > 0) {
+                          form.reminders.forEach(r => {
+                            if (!r.isCompleted) activeReminders.push(r);
+                          });
+                        }
+                        // Check legacy reminder
+                        else if (form.reminder?.isSet && !form.reminder?.isCompleted) {
+                          activeReminders.push({ ...form.reminder, isLegacy: true });
+                        }
 
-                      if (activeReminders.length === 0) return null;
+                        if (activeReminders.length === 0) return null;
 
-                      // Sort by date (earliest first)
-                      activeReminders.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+                        // Sort by date (earliest first)
+                        activeReminders.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
 
-                      // Show up to 2 badges, then a count
-                      const displayReminders = activeReminders.slice(0, 2);
-                      const remainingCount = activeReminders.length - displayReminders.length;
+                        // Show up to 2 badges, then a count
+                        const displayReminders = activeReminders.slice(0, 2);
+                        const remainingCount = activeReminders.length - displayReminders.length;
 
-                      return (
-                        <>
-                          {displayReminders.map((reminder, index) => (
-                            <div
-                              key={index}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.4rem 0.8rem',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                borderRadius: '20px',
-                                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
-                                animation: 'pulse 2s infinite',
-                                cursor: 'pointer'
-                              }}
-                              title="Click to view/edit reminder"
-                              onClick={() => setActionReminder({ reminder, formId: form._id, isLegacy: reminder.isLegacy })}
-                            >
-                              <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                                <span style={{
-                                  fontSize: '0.7rem',
-                                  fontWeight: '600',
-                                  color: 'white',
-                                  lineHeight: '1',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                                }}>
-                                  {new Date(reminder.dateTime).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </span>
-                                <span style={{
-                                  fontSize: '0.65rem',
-                                  fontWeight: '500',
-                                  color: 'rgba(255,255,255,0.9)',
-                                  lineHeight: '1',
-                                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                                }}>
-                                  {new Date(reminder.dateTime).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                  })}
-                                </span>
+                        return (
+                          <>
+                            {displayReminders.map((reminder, index) => (
+                              <div
+                                key={index}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  padding: '0.4rem 0.8rem',
+                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                  borderRadius: '20px',
+                                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+                                  animation: 'pulse 2s infinite',
+                                  cursor: 'pointer'
+                                }}
+                                title="Click to view/edit reminder"
+                                onClick={() => setActionReminder({ reminder, formId: form._id, isLegacy: reminder.isLegacy })}
+                              >
+                                <span style={{ fontSize: '1rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>🔔</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                                  <span style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: '600',
+                                    color: 'white',
+                                    lineHeight: '1',
+                                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                  }}>
+                                    {new Date(reminder.dateTime).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    fontWeight: '500',
+                                    color: 'rgba(255,255,255,0.9)',
+                                    lineHeight: '1',
+                                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                  }}>
+                                    {new Date(reminder.dateTime).toLocaleTimeString('en-US', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: true
+                                    })}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                          {remainingCount > 0 && (
-                            <div
-                              style={{
-                                padding: '0.4rem 0.6rem',
-                                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                                borderRadius: '50%',
-                                color: 'white',
-                                fontSize: '0.75rem',
-                                fontWeight: '700',
-                                boxShadow: '0 2px 6px rgba(245, 87, 108, 0.3)',
-                                cursor: 'pointer'
-                              }}
-                              title={`${remainingCount} more reminder${remainingCount > 1 ? 's' : ''}`}
-                              onClick={() => setReminderForm(form)}
-                            >
-                              +{remainingCount}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                    <StatusDropdown
-                      formId={form._id}
-                      currentStatus={form.progressStatus}
-                      onUpdate={() => fetchForms()}
-                    />
-                    <span className={`status-badge status-${form.status}`}>
-                      {form.status.toUpperCase()}
-                    </span>
+                            ))}
+                            {remainingCount > 0 && (
+                              <div
+                                style={{
+                                  padding: '0.4rem 0.6rem',
+                                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                  borderRadius: '50%',
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '700',
+                                  boxShadow: '0 2px 6px rgba(245, 87, 108, 0.3)',
+                                  cursor: 'pointer'
+                                }}
+                                title={`${remainingCount} more reminder${remainingCount > 1 ? 's' : ''}`}
+                                onClick={() => setReminderForm(form)}
+                              >
+                                +{remainingCount}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                      <StatusDropdown
+                        formId={form._id}
+                        currentStatus={form.progressStatus}
+                        onUpdate={() => fetchForms()}
+                      />
+                      <span className={`status-badge status-${form.status}`}>
+                        {form.status.toUpperCase()}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Expanded Content - Only Visible When Expanded */}
+                  {expandedForms[form._id] && (
+                    <>
+                      <div className="card-content" style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Mobile:</strong> {form.mobileNumber || 'N/A'} | <strong>Product:</strong> {form.product || 'N/A'}
+                          {form.loanAmount > 0 && <span> | <strong>Loan Amount:</strong> ₹{form.loanAmount.toLocaleString()}</span>}
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Company:</strong> {form.companyName || 'N/A'} | <strong>Business Type:</strong> {form.businessType || 'N/A'}
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Lead ID:</strong> {form.leadId || 'N/A'} | <strong>Source:</strong> {form.mainSource || 'N/A'}
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Location:</strong> {form.city || 'N/A'}, {form.state || 'N/A'}
+                          {form.propertyType && <span> | <strong>Status:</strong> {form.propertyType}</span>}
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Agent:</strong> {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
+                          <strong>Submitted By:</strong> {form.userId?.name || 'N/A'}
+                        </div>
+                        <div className="card-meta" style={{ marginBottom: '1rem' }}>
+                          <strong>Date:</strong> {form.submissionDate ? formatDate(form.submissionDate) : formatDate(form.createdAt)} | <strong>Time:</strong> {form.submissionTime || 'N/A'}
+                        </div>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Agent Remarks:</strong>
+                          <p style={{ margin: '0.5rem 0' }}>{form.agentRemarks || 'No remarks provided'}</p>
+                        </div>
+
+                        {form.status !== 'pending' && form.supervisorName && (
+                          <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                            <h4>Supervisor Information:</h4>
+                            <p><strong>Supervisor:</strong> {form.supervisorName} (ID: {form.supervisorId})</p>
+                            {form.asmName && <p><strong>ASM Name:</strong> {form.asmName}</p>}
+                            {form.asmContactNo && <p><strong>ASM Contact:</strong> {form.asmContactNo}</p>}
+                            {form.asmEmailId && <p><strong>ASM Email:</strong> {form.asmEmailId}</p>}
+                            {form.city && <p><strong>City:</strong> {form.city}</p>}
+                            {form.areaName && <p><strong>Area:</strong> {form.areaName}</p>}
+                            {form.supervisorRemark && <p><strong>Supervisor Remark:</strong> {form.supervisorRemark}</p>}
+                          </div>
+                        )}
+
+                        {/* --- ADMIN LEAD TRACKING DETAILS --- */}
+                        {form.status !== 'pending' && (
+                          <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#eef2f7', borderRadius: '4px' }}>
+                            <h4 style={{ marginBottom: '0.5rem', color: '#2c3e50' }}>Lead Tracking Details:</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                              <div><strong>Campaign:</strong> {form.campaign || 'N/A'}</div>
+                              <div><strong>Vertical:</strong> {form.leadCreatedVertical || 'N/A'}</div>
+                              <div><strong>Data Date:</strong> {form.dataReceivedDate ? formatDate(form.dataReceivedDate) : 'N/A'}</div>
+                              <div><strong>Assigned To:</strong> {form.assignedName || 'N/A'}</div>
+                              <div><strong>ASM Mobile:</strong> {form.asmMobileNumber || 'N/A'}</div>
+                              <div><strong>Admin Date:</strong> {form.adminDate ? formatDate(form.adminDate) : 'N/A'}</div>
+                              <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
+                              <div><strong>Status:</strong> {form.leadStatus || 'N/A'}</div>
+                              {/* <div><strong>Category:</strong> {form.leadCategory || 'N/A'}</div> */}
+                              <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
+                              <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
+                              <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {form.status !== 'pending' && form.reviewComment && (
+                          <div className="review-section" style={{ marginTop: '1rem' }}>
+                            <h4>Review Comment:</h4>
+                            <p>{form.reviewComment}</p>
+                            <div className="card-meta">
+                              Reviewed by: {form.reviewedBy?.name} on {formatDate(form.reviewedAt)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="card-actions" style={{ marginTop: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="btn-primary"
+                          onClick={() => navigate(`/forms/${form._id}`)}
+                        >
+                          View Details & Remarks
+                        </button>
+                        <button
+                          className="btn-primary"
+                          onClick={() => setReminderForm(form)}
+                        >
+                          Set Reminder
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                {/* Expanded Content - Only Visible When Expanded */}
-                {expandedForms[form._id] && (
-                  <>
-                    <div className="card-content" style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Mobile:</strong> {form.mobileNumber || 'N/A'} | <strong>Product:</strong> {form.product || 'N/A'}
-                        {form.loanAmount > 0 && <span> | <strong>Loan Amount:</strong> ₹{form.loanAmount.toLocaleString()}</span>}
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Company:</strong> {form.companyName || 'N/A'} | <strong>Business Type:</strong> {form.businessType || 'N/A'}
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Lead ID:</strong> {form.leadId || 'N/A'} | <strong>Source:</strong> {form.mainSource || 'N/A'}
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Location:</strong> {form.city || 'N/A'}, {form.state || 'N/A'}
-                        {form.propertyType && <span> | <strong>Status:</strong> {form.propertyType}</span>}
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Agent:</strong> {form.agentName || 'N/A'} (ID: {form.agentId || 'N/A'})
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '0.5rem' }}>
-                        <strong>Submitted By:</strong> {form.userId?.name || 'N/A'}
-                      </div>
-                      <div className="card-meta" style={{ marginBottom: '1rem' }}>
-                        <strong>Date:</strong> {form.submissionDate ? formatDate(form.submissionDate) : formatDate(form.createdAt)} | <strong>Time:</strong> {form.submissionTime || 'N/A'}
-                      </div>
-
-                      <div style={{ marginBottom: '1rem' }}>
-                        <strong>Agent Remarks:</strong>
-                        <p style={{ margin: '0.5rem 0' }}>{form.agentRemarks || 'No remarks provided'}</p>
-                      </div>
-
-                      {form.status !== 'pending' && form.supervisorName && (
-                        <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                          <h4>Supervisor Information:</h4>
-                          <p><strong>Supervisor:</strong> {form.supervisorName} (ID: {form.supervisorId})</p>
-                          {form.asmName && <p><strong>ASM Name:</strong> {form.asmName}</p>}
-                          {form.asmContactNo && <p><strong>ASM Contact:</strong> {form.asmContactNo}</p>}
-                          {form.asmEmailId && <p><strong>ASM Email:</strong> {form.asmEmailId}</p>}
-                          {form.city && <p><strong>City:</strong> {form.city}</p>}
-                          {form.areaName && <p><strong>Area:</strong> {form.areaName}</p>}
-                          {form.supervisorRemark && <p><strong>Supervisor Remark:</strong> {form.supervisorRemark}</p>}
-                        </div>
-                      )}
-
-                      {/* --- ADMIN LEAD TRACKING DETAILS --- */}
-                      {form.status !== 'pending' && (
-                        <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#eef2f7', borderRadius: '4px' }}>
-                          <h4 style={{ marginBottom: '0.5rem', color: '#2c3e50' }}>Lead Tracking Details:</h4>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
-                            <div><strong>Campaign:</strong> {form.campaign || 'N/A'}</div>
-                            <div><strong>Vertical:</strong> {form.leadCreatedVertical || 'N/A'}</div>
-                            <div><strong>Data Date:</strong> {form.dataReceivedDate ? formatDate(form.dataReceivedDate) : 'N/A'}</div>
-                            <div><strong>Assigned To:</strong> {form.assignedName || 'N/A'}</div>
-                            <div><strong>ASM Mobile:</strong> {form.asmMobileNumber || 'N/A'}</div>
-                            <div><strong>Admin Date:</strong> {form.adminDate ? formatDate(form.adminDate) : 'N/A'}</div>
-                            <div><strong>Best Dispo:</strong> {form.bestDispo || 'N/A'}</div>
-                            <div><strong>Status:</strong> {form.leadStatus || 'N/A'}</div>
-                            {/* <div><strong>Category:</strong> {form.leadCategory || 'N/A'}</div> */}
-                            <div><strong>ASM Status:</strong> {form.asmStatus || 'N/A'}</div>
-                            <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
-                            <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {form.status !== 'pending' && form.reviewComment && (
-                        <div className="review-section" style={{ marginTop: '1rem' }}>
-                          <h4>Review Comment:</h4>
-                          <p>{form.reviewComment}</p>
-                          <div className="card-meta">
-                            Reviewed by: {form.reviewedBy?.name} on {formatDate(form.reviewedAt)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="card-actions" style={{ marginTop: '1rem' }} onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="btn-primary"
-                        onClick={() => navigate(`/forms/${form._id}`)}
-                      >
-                        View Details & Remarks
-                      </button>
-                      <button
-                        className="btn-primary"
-                        onClick={() => setReminderForm(form)}
-                      >
-                        Set Reminder
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))
+              ))
           )}
         </div>
       </div>
