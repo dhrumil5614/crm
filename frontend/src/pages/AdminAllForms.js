@@ -550,6 +550,24 @@ const AdminAllForms = () => {
                             </div>
                           </div>
                         )}
+
+                        {/* Remarks History */}
+                        {form.remarks && form.remarks.length > 0 && (
+                          <div style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                            <h4 style={{ marginBottom: '0.5rem', color: '#2c3e50' }}>Remarks History:</h4>
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', background: '#f8f9fa', padding: '0.5rem', borderRadius: '4px' }}>
+                              {[...form.remarks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((remark, idx) => (
+                                <div key={idx} style={{ padding: '0.5rem', borderBottom: idx !== form.remarks.length - 1 ? '1px solid #e9ecef' : 'none' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem', fontSize: '0.85rem' }}>
+                                    <strong style={{ color: '#34495e' }}>{remark.senderName} ({remark.senderRole})</strong>
+                                    <span style={{ color: '#95a5a6', fontSize: '0.8rem' }}>{new Date(remark.createdAt).toLocaleString()}</span>
+                                  </div>
+                                  <p style={{ margin: 0, color: '#2c3e50', fontSize: '0.9rem' }}>{remark.message}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="card-actions" style={{ marginTop: '1rem' }} onClick={(e) => e.stopPropagation()}>
