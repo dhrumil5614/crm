@@ -177,7 +177,7 @@ const FormDetails = () => {
                     <div className="dashboard-header">
                         <h2>Form Details</h2>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {canEdit && isEditing && (
+                            {isEditing && (
                                 <button
                                     onClick={handleUpdate}
                                     disabled={updateLoading}
@@ -352,29 +352,26 @@ const FormDetails = () => {
                                     </div> */}
                                     <div>
                                         <strong>ASM Status:</strong>
-                                        {canEdit ? (
-                                            <select
-                                                name="asmStatus"
-                                                value={formData.asmStatus}
-                                                onChange={handleInputChange}
-                                                style={{
-                                                    display: 'block',
-                                                    width: '100%',
-                                                    padding: '0.5rem',
-                                                    marginTop: '0.5rem',
-                                                    borderRadius: '4px',
-                                                    border: '2px solid #3498db',
-                                                    fontSize: '0.95rem'
-                                                }}
-                                            >
-                                                <option value="">Select ASM Status</option>
-                                                {asmStatuses.map(opt => (
-                                                    <option key={opt} value={opt}>{opt}</option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <span style={{ display: 'block', marginTop: '0.5rem' }}>{form.asmStatus || 'N/A'}</span>
-                                        )}
+                                        {/* Always editable for Owner/User as requested */}
+                                        <select
+                                            name="asmStatus"
+                                            value={formData.asmStatus}
+                                            onChange={handleInputChange}
+                                            style={{
+                                                display: 'block',
+                                                width: '100%',
+                                                padding: '0.5rem',
+                                                marginTop: '0.5rem',
+                                                borderRadius: '4px',
+                                                border: '2px solid #3498db',
+                                                fontSize: '0.95rem'
+                                            }}
+                                        >
+                                            <option value="">Select ASM Status</option>
+                                            {asmStatuses.map(opt => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div><strong>ASM Remark:</strong> {form.asmRemark || 'N/A'}</div>
                                     <div><strong>In Future Month:</strong> {form.inFutureMonth || 'N/A'}</div>

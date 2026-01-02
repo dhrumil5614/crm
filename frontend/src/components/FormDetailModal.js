@@ -376,28 +376,25 @@ const FormDetailModal = ({ form, onClose, onUpdate }) => {
               </div>
               <div>
                 <strong style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>ASM Status:</strong>
-                {(form.status === 'approved' || form.status === 'rejected') ? (
-                  <select
-                    name="asmStatus"
-                    value={formData.asmStatus}
-                    onChange={handleInputChange}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '0.25rem',
-                      marginTop: '0.25rem',
-                      borderRadius: '4px',
-                      border: '1px solid #ccc'
-                    }}
-                  >
-                    <option value="">Select ASM Status</option>
-                    {asmStatuses.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <p style={{ margin: '0.25rem 0', color: '#2c3e50' }}>{form.asmStatus || 'N/A'}</p>
-                )}
+                {/* Always editable for Owner/User */}
+                <select
+                  name="asmStatus"
+                  value={formData.asmStatus}
+                  onChange={handleInputChange}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.25rem',
+                    marginTop: '0.25rem',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc'
+                  }}
+                >
+                  <option value="">Select ASM Status</option>
+                  {asmStatuses.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <strong style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>ASM Remark:</strong>

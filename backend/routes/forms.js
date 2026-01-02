@@ -749,23 +749,33 @@ router.put('/:id', protect, audit('UPDATE_LEAD', 'Form'), async (req, res) => {
       });
     }
 
-    // Check if user is authorized (Admin only for these specific fields usually, or owner)
-    // For now, allow admin to update everything, owner to update nothing via this route (since edits are usually restricted)
-    // The requirement says "admin side", so we restrict to admin.
-    if (req.user.role !== 'admin') {
+    // Check if user is authorized
+    // Admin can update everything.
+    // Owner can ONLY update 'asmStatus' (and 'asmRemark' if needed, but per request 'ASM status only').
+    const isOwner = form.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update form details'
       });
     }
 
-    const fieldsToUpdate = [
-      'campaign', 'leadCreatedVertical', 'dataReceivedDate', 'assignedName',
-      'asmMobileNumber', 'adminDate', 'bestDispo', 'leadStatus', // 'leadCategory',
-      'asmStatus', 'asmRemark', 'inFutureMonth', 'product', 'companyName',
-      'customerName', 'mobileNumber', 'city', 'state', 'loanAmount', 'businessType',
-      'propertyType', 'mainSource', 'leadId'
-    ];
+    let fieldsToUpdate = [];
+
+    if (isAdmin) {
+      fieldsToUpdate = [
+        'campaign', 'leadCreatedVertical', 'dataReceivedDate', 'assignedName',
+        'asmMobileNumber', 'adminDate', 'bestDispo', 'leadStatus', // 'leadCategory',
+        'asmStatus', 'asmRemark', 'inFutureMonth', 'product', 'companyName',
+        'customerName', 'mobileNumber', 'city', 'state', 'loanAmount', 'businessType',
+        'propertyType', 'mainSource', 'leadId'
+      ];
+    } else {
+      // Regular User / Owner - Only allow asmStatus
+      fieldsToUpdate = ['asmStatus'];
+    }
 
     fieldsToUpdate.forEach(field => {
       if (req.body[field] !== undefined) {
