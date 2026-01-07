@@ -57,7 +57,8 @@ router.post(
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
-      // === ADMIN: 2FA Flow ===
+      // === ADMIN: 2FA Flow (DISABLED) ===
+      /*
       if (user.role === 'admin') {
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -104,34 +105,37 @@ router.post(
             requiresOtp: true
           });
         }
+        return; // Ensure we don't fall through if we were using this block
       }
-      // === USER: Direct Login (No OTP) ===
-      else {
-        const token = generateToken(user._id);
+      */
 
-        await logAudit({
-          user: user._id,
-          action: 'LOGIN_SUCCESS',
-          resource: 'Auth',
-          details: { role: 'user', method: 'Direct' },
-          ip: getIp(req),
-          userAgent: req.headers['user-agent']
-        });
+      // === USER & ADMIN: Direct Login (No OTP) ===
+      // else { // Removed else wrapper to apply to all
+      const token = generateToken(user._id);
 
-        res.status(200).json({
-          success: true,
-          token,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            campaign: user.campaign,
-            mustChangePassword: user.mustChangePassword
-          },
-          requiresOtp: false
-        });
-      }
+      await logAudit({
+        user: user._id,
+        action: 'LOGIN_SUCCESS',
+        resource: 'Auth',
+        details: { role: user.role, method: 'Direct' },
+        ip: getIp(req),
+        userAgent: req.headers['user-agent']
+      });
+
+      res.status(200).json({
+        success: true,
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          campaign: user.campaign,
+          mustChangePassword: user.mustChangePassword
+        },
+        requiresOtp: false
+      });
+      // }
 
     } catch (error) {
       console.error('Login error:', error);
@@ -228,7 +232,8 @@ router.post(
     try {
       const { email } = req.body;
 
-      const user = await User.findOne({ email });
+      // Populate createdBy to get admin email
+      const user = await User.findOne({ email }).populate('createdBy', 'email');
       if (!user) {
         return res.status(404).json({ success: false, message: 'No account found with this email' });
       }
@@ -283,7 +288,17 @@ router.post(
         user.mustChangePassword = true;
         await user.save();
 
-        const adminEmail = process.env.EMAIL_USER;
+        user.mustChangePassword = true;
+        await user.save();
+
+        // Determine destination email
+        // Logic: If user has a creator, send to them. Else (legacy), send to specific admin.
+        let adminEmail = 'ajay.ahirwar@lakhuteleservices.com'; // Default/Fallback
+
+        if (user.createdBy && user.createdBy.email) {
+          adminEmail = user.createdBy.email;
+        }
+
         const message = `Password reset request from user:\n\nName: ${user.name}\nEmail: ${user.email}\n\n✅ A temporary password has been generated:\n\nTemporary Password: ${tempPassword}\n\nPlease provide this password to the user. They will be required to change it on first login.`;
 
         console.log('\n==========================================');
@@ -505,7 +520,8 @@ router.post(
         role,
         campaign: campaign || 'New Sales', // Default if not provided
         isEmailVerified: true,
-        mustChangePassword: true // Force password change on first login
+        mustChangePassword: true, // Force password change on first login
+        createdBy: req.user._id // Track who created this user
       });
 
       const message = `Hello ${name},\n\nYour account has been created by the administrator.\n\nLogin Credentials:\nEmail: ${email}\nPassword: ${password}\n\nYou will be required to change your password on first login.`;
