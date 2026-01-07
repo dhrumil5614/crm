@@ -284,10 +284,8 @@ router.post(
         const tempPassword = Math.random().toString(36).slice(-10) + Math.floor(Math.random() * 100);
 
         // Update user's password to temporary password
+        // Update user's password to temporary password
         user.password = tempPassword;
-        user.mustChangePassword = true;
-        await user.save();
-
         user.mustChangePassword = true;
         await user.save();
 
