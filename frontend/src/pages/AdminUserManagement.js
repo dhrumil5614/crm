@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../services/api';
+import './AdminUserManagement.css'; // Import the new styles
 
 const AdminUserManagement = () => {
     const { createUser } = useAuth();
 
     // Users List State
     const [users, setUsers] = useState([]);
+
+    // Modal State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
 
     // Form State (Create)
     const [formData, setFormData] = useState({
@@ -18,11 +23,12 @@ const AdminUserManagement = () => {
         campaign: 'New Sales'
     });
 
-    // Edit State
-    const [editingUser, setEditingUser] = useState(null);
+    // Form State (Edit)
     const [editFormData, setEditFormData] = useState({
         role: 'user',
-        campaign: 'New Sales'
+        campaign: 'New Sales',
+        password: '',
+        mustChangePassword: false
     });
 
     // UI State
@@ -34,26 +40,36 @@ const AdminUserManagement = () => {
     }, []);
 
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const res = await adminAPI.getUsers();
             setUsers(res.data.users);
         } catch (err) {
             console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleEditChange = (e) => {
-        setEditFormData({
-            ...editFormData,
-            [e.target.name]: e.target.value
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+        setEditFormData({ ...editFormData, [e.target.name]: value });
+    };
+
+    const openCreateModal = () => {
+        setFormData({
+            name: '',
+            email: '',
+            password: '',
+            role: 'user',
+            campaign: 'New Sales'
         });
+        setMessage({ type: '', text: '' });
+        setIsCreateModalOpen(true);
     };
 
     const startEdit = (user) => {
@@ -61,26 +77,28 @@ const AdminUserManagement = () => {
         setEditFormData({
             role: user.role,
             campaign: user.campaign || 'New Sales',
-            password: '', // New password field
+            password: '',
             mustChangePassword: user.mustChangePassword || false
         });
-        // Clear create form messages
         setMessage({ type: '', text: '' });
     };
 
-    const cancelEdit = () => {
+    const closeModals = () => {
+        setIsCreateModalOpen(false);
         setEditingUser(null);
+        setMessage({ type: '', text: '' });
     };
 
     const handleUpdateUser = async (e) => {
         e.preventDefault();
         try {
             await adminAPI.updateUser(editingUser._id, editFormData);
-            setMessage({ type: 'success', text: 'User updated successfully' });
+            // Show success via alert for simplicity
+            alert('User updated successfully');
             setEditingUser(null);
             fetchUsers();
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.message || 'Update failed' });
+            alert(err.response?.data?.message || 'Update failed');
         }
     };
 
@@ -90,253 +108,215 @@ const AdminUserManagement = () => {
         }
         try {
             await adminAPI.deleteUser(user._id);
-            setMessage({ type: 'success', text: 'User deleted successfully' });
-            fetchUsers();
+            fetchUsers(); // Auto refresh
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.message || 'Delete failed' });
+            alert(err.response?.data?.message || 'Delete failed');
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleCreateSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setMessage({ type: '', text: '' });
 
         if (formData.password.length < 6) {
             setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
-            setLoading(false);
             return;
         }
 
         const result = await createUser(formData);
 
         if (result.success) {
-            setMessage({ type: 'success', text: `User ${formData.name} created successfully! Email sent to ${formData.email}.` });
-            setFormData({
-                name: '',
-                email: '',
-                password: '',
-                role: 'user',
-                campaign: 'New Sales'
-            });
+            alert(`User ${formData.name} created successfully!`);
+            closeModals();
             fetchUsers();
         } else {
             setMessage({ type: 'error', text: result.message });
         }
-        setLoading(false);
+    };
+
+    // Helper for initials
+    const getInitials = (name) => {
+        return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
     };
 
     return (
-        <>
+        <div className="admin-user-page">
             <Navbar />
-            <div className="container">
-                {/* Create User Card */}
-                <div className="card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
-                    <div className="card-header">
-                        <h2 className="card-title">Create New User</h2>
-                    </div>
-
-                    <div className="card-content">
-                        {message.text && (
-                            <div className={`alert alert-${message.type}`} style={{ marginBottom: '1rem' }}>
-                                {message.text}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div className="form-group">
-                                <label>Full Name</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="e.g. John Doe"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Email Address</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="user@example.com"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Password</label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="Min. 6 characters"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Role</label>
-                                <select
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                >
-                                    <option value="user">Standard User</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                            </div>
-
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                <label>Campaign</label>
-                                <select
-                                    name="campaign"
-                                    value={formData.campaign || 'New Sales'}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                >
-                                    <option value="New Sales">New Sales (Default)</option>
-                                    <option value="CP sign Up">CP Sign Up</option>
-                                    <option value="LG Retail">LG Retail</option>
-                                </select>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="btn btn-primary"
-                                disabled={loading}
-                                style={{ gridColumn: 'span 2' }}
-                            >
-                                {loading ? 'Creating...' : 'Create User'}
-                            </button>
-                        </form>
-                    </div>
+            <div className="admin-user-container">
+                {/* Header Section */}
+                <div className="page-header">
+                    <h1 className="page-title">Team Management</h1>
+                    <button className="add-user-btn" onClick={openCreateModal}>
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add New Member
+                    </button>
                 </div>
 
-                {/* Users List Card */}
-                <div className="card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
-                    <div className="card-header">
-                        <h2 className="card-title">Manage Users ({users.length})</h2>
-                    </div>
-                    <div className="table-responsive">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Campaign</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map(user => (
-                                    <tr key={user._id}>
-                                        <td>{user.name}</td>
-                                        <td>{user.email}</td>
-                                        <td>
-                                            <span className={`badge ${user.role === 'admin' ? 'badge-primary' : 'badge-secondary'}`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td>{user.campaign || '-'}</td>
-                                        <td>
-                                            <button
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => startEdit(user)}
-                                                style={{ marginRight: '0.5rem' }}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() => handleDeleteUser(user)}
-                                                style={{ background: '#e74c3c', color: 'white', border: 'none' }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                {/* Users Grid */}
+                {loading && users.length === 0 ? (
+                    <div className="loading-skeleton"></div>
+                ) : (
+                    <div className="users-grid">
+                        {users.map(user => (
+                            <div className="user-card" key={user._id}>
+                                <div className="user-card-header">
+                                    <div className="user-avatar-placeholder">
+                                        {getInitials(user.name)}
+                                    </div>
+                                    <span className={`role-badge ${user.role}`}>
+                                        {user.role}
+                                    </span>
+                                </div>
 
-                {/* Edit User Modal */}
-                {editingUser && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        zIndex: 1000
-                    }}>
-                        <div className="card" style={{ width: '400px', padding: '1rem' }}>
-                            <h3>Edit {editingUser.name}</h3>
-                            <form onSubmit={handleUpdateUser}>
-                                <div className="form-group">
-                                    <label>Role</label>
-                                    <select
-                                        name="role"
-                                        value={editFormData.role}
-                                        onChange={handleEditChange}
-                                        className="form-control"
+                                <div className="user-info">
+                                    <h3>{user.name}</h3>
+                                    <span className="user-email">{user.email}</span>
+                                    {user.campaign && (
+                                        <div className="campaign-tag">
+                                            {user.campaign}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="card-actions">
+                                    <button
+                                        className="btn-icon-text btn-edit"
+                                        onClick={() => startEdit(user)}
                                     >
-                                        <option value="user">Standard User</option>
-                                        <option value="admin">Administrator</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Campaign</label>
-                                    <select
-                                        name="campaign"
-                                        value={editFormData.campaign}
-                                        onChange={handleEditChange}
-                                        className="form-control"
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="btn-icon-text btn-delete"
+                                        onClick={() => handleDeleteUser(user)}
                                     >
-                                        <option value="New Sales">New Sales</option>
-                                        <option value="CP sign Up">CP Sign Up</option>
-                                        <option value="LG Retail">LG Retail</option>
-                                    </select>
+                                        Delete
+                                    </button>
                                 </div>
-                                <div className="form-group">
-                                    <label>New Password (Optional)</label>
-                                    <input
-                                        type="text" // Visible text so admin can see what they are setting
-                                        name="password"
-                                        value={editFormData.password}
-                                        onChange={handleEditChange}
-                                        placeholder="Set new password"
-                                        minLength="6"
-                                        className="form-control"
-                                    />
-                                    <small style={{ color: '#666' }}>Leave empty to keep current password</small>
-                                </div>
-                                <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-                                    <input
-                                        type="checkbox"
-                                        name="mustChangePassword"
-                                        checked={editFormData.mustChangePassword}
-                                        onChange={(e) => setEditFormData({ ...editFormData, mustChangePassword: e.target.checked })}
-                                        id="forcePswChange"
-                                    />
-                                    <label htmlFor="forcePswChange" style={{ marginBottom: 0 }}>Force Password Change on Next Login</label>
-                                </div>
-                                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                                    <button type="submit" className="btn btn-primary">Update</button>
-                                    <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
-                                </div>
-                            </form>
-                        </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
-        </>
+
+            {/* Create User Modal */}
+            {isCreateModalOpen && (
+                <div className="modal-overlay" onClick={(e) => { if (e.target.className === 'modal-overlay') closeModals() }}>
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2 className="modal-title">Add New Team Member</h2>
+                            <button className="close-btn" onClick={closeModals}>&times;</button>
+                        </div>
+                        <form onSubmit={handleCreateSubmit}>
+                            <div className="modal-body">
+                                {message.text && (
+                                    <div className={`toast-message toast-${message.type}`}>
+                                        {message.text}
+                                    </div>
+                                )}
+                                <div className="form-grid">
+                                    <div className="input-group">
+                                        <label>Full Name</label>
+                                        <input type="text" name="name" className="input-field" value={formData.name} onChange={handleChange} placeholder="John Doe" required />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Email Address</label>
+                                        <input type="email" name="email" className="input-field" value={formData.email} onChange={handleChange} placeholder="john@example.com" required />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Initial Password</label>
+                                        <input type="password" name="password" className="input-field" value={formData.password} onChange={handleChange} placeholder="••••••••" required />
+                                    </div>
+                                    <div className="input-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label>Role</label>
+                                            <select name="role" className="select-field" value={formData.role} onChange={handleChange}>
+                                                <option value="user">User</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label>Campaign</label>
+                                            <select name="campaign" className="select-field" value={formData.campaign} onChange={handleChange}>
+                                                <option value="New Sales">New Sales</option>
+                                                <option value="CP sign Up">CP Sign Up</option>
+                                                <option value="LG Retail">LG Retail</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-cancel" onClick={closeModals}>Cancel</button>
+                                <button type="submit" className="btn-submit">Create Account</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {editingUser && (
+                <div className="modal-overlay" onClick={(e) => { if (e.target.className === 'modal-overlay') closeModals() }}>
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2 className="modal-title">Edit Member</h2>
+                            <button className="close-btn" onClick={closeModals}>&times;</button>
+                        </div>
+                        <form onSubmit={handleUpdateUser}>
+                            <div className="modal-body">
+                                <div className="form-grid">
+                                    <div className="input-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label>Role</label>
+                                            <select name="role" className="select-field" value={editFormData.role} onChange={handleEditChange}>
+                                                <option value="user">User</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label>Campaign</label>
+                                            <select name="campaign" className="select-field" value={editFormData.campaign} onChange={handleEditChange}>
+                                                <option value="New Sales">New Sales</option>
+                                                <option value="CP sign Up">CP Sign Up</option>
+                                                <option value="LG Retail">LG Retail</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ margin: '0.5rem 0', borderTop: '1px solid #e2e8f0' }}></div>
+
+                                    <div className="input-group">
+                                        <label>New Password (Optional)</label>
+                                        <input type="text" name="password" className="input-field" value={editFormData.password} onChange={handleEditChange} placeholder="Set new password to reset" />
+                                        <span className="helper-text">Leave blank to keep existing password</span>
+                                    </div>
+
+                                    <div className="checkbox-group">
+                                        <input
+                                            type="checkbox"
+                                            id="forcePswChange"
+                                            name="mustChangePassword"
+                                            className="checkbox-visual"
+                                            checked={editFormData.mustChangePassword}
+                                            onChange={handleEditChange}
+                                        />
+                                        <label htmlFor="forcePswChange" style={{ marginBottom: 0, cursor: 'pointer' }}>
+                                            Force password change on next login
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-cancel" onClick={closeModals}>Cancel</button>
+                                <button type="submit" className="btn-submit">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
