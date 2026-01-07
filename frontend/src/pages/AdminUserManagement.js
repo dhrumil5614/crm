@@ -60,7 +60,9 @@ const AdminUserManagement = () => {
         setEditingUser(user);
         setEditFormData({
             role: user.role,
-            campaign: user.campaign || 'New Sales'
+            campaign: user.campaign || 'New Sales',
+            password: '', // New password field
+            mustChangePassword: user.mustChangePassword || false
         });
         // Clear create form messages
         setMessage({ type: '', text: '' });
@@ -79,6 +81,19 @@ const AdminUserManagement = () => {
             fetchUsers();
         } catch (err) {
             setMessage({ type: 'error', text: err.response?.data?.message || 'Update failed' });
+        }
+    };
+
+    const handleDeleteUser = async (user) => {
+        if (!window.confirm(`Are you sure you want to delete user ${user.name}? This action cannot be undone.`)) {
+            return;
+        }
+        try {
+            await adminAPI.deleteUser(user._id);
+            setMessage({ type: 'success', text: 'User deleted successfully' });
+            fetchUsers();
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.message || 'Delete failed' });
         }
     };
 
@@ -235,8 +250,16 @@ const AdminUserManagement = () => {
                                             <button
                                                 className="btn btn-secondary btn-sm"
                                                 onClick={() => startEdit(user)}
+                                                style={{ marginRight: '0.5rem' }}
                                             >
                                                 Edit
+                                            </button>
+                                            <button
+                                                className="btn btn-danger btn-sm"
+                                                onClick={() => handleDeleteUser(user)}
+                                                style={{ background: '#e74c3c', color: 'white', border: 'none' }}
+                                            >
+                                                Delete
                                             </button>
                                         </td>
                                     </tr>
@@ -280,6 +303,29 @@ const AdminUserManagement = () => {
                                         <option value="CP sign Up">CP Sign Up</option>
                                         <option value="LG Retail">LG Retail</option>
                                     </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>New Password (Optional)</label>
+                                    <input
+                                        type="text" // Visible text so admin can see what they are setting
+                                        name="password"
+                                        value={editFormData.password}
+                                        onChange={handleEditChange}
+                                        placeholder="Set new password"
+                                        minLength="6"
+                                        className="form-control"
+                                    />
+                                    <small style={{ color: '#666' }}>Leave empty to keep current password</small>
+                                </div>
+                                <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        name="mustChangePassword"
+                                        checked={editFormData.mustChangePassword}
+                                        onChange={(e) => setEditFormData({ ...editFormData, mustChangePassword: e.target.checked })}
+                                        id="forcePswChange"
+                                    />
+                                    <label htmlFor="forcePswChange" style={{ marginBottom: 0 }}>Force Password Change on Next Login</label>
                                 </div>
                                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                                     <button type="submit" className="btn btn-primary">Update</button>

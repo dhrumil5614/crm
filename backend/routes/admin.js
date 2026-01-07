@@ -21,11 +21,11 @@ router.get('/users', async (req, res) => {
 });
 
 // @route   PUT /api/admin/users/:id
-// @desc    Update user (role, campaign, etc)
+// @desc    Update user (role, campaign, password, etc)
 // @access  Private/Admin
 router.put('/users/:id', async (req, res) => {
   try {
-    const { role, campaign } = req.body;
+    const { role, campaign, password, mustChangePassword } = req.body;
     const user = await require('../models/User').findById(req.params.id);
 
     if (!user) {
@@ -34,10 +34,40 @@ router.put('/users/:id', async (req, res) => {
 
     if (role) user.role = role;
     if (campaign) user.campaign = campaign;
+    if (password && password.trim().length >= 6) {
+      user.password = password; // Will be hashed by pre-save hook
+    }
+    if (typeof mustChangePassword === 'boolean') {
+      user.mustChangePassword = mustChangePassword;
+    }
 
     await user.save();
 
     res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @route   DELETE /api/admin/users/:id
+// @desc    Delete user
+// @access  Private/Admin
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await require('../models/User').findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Prevent deleting self
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'Cannot delete yourself' });
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
